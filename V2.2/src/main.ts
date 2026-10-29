@@ -3,6 +3,7 @@ import { ExplorationScene } from "./scenes/ExplorationScene";
 import "./style.css";
 import { loadProgress } from "./systems/save";
 import { VIEW } from "./data/phase";
+import { setupTouchControls } from "./systems/touchControls";
 
 const menu = document.querySelector<HTMLElement>("#menu");
 const pauseScreen = document.querySelector<HTMLElement>("#pause-screen");
@@ -14,6 +15,9 @@ const host = document.querySelector<HTMLElement>("#game-container");
 if (!menu || !pauseScreen || !endingScreen || !continueButton || !status || !host) {
   throw new Error("A interface da V2 está incompleta: faltam elementos obrigatórios do documento.");
 }
+
+const touchControls = document.querySelector<HTMLElement>("#touch-controls");
+if (touchControls) setupTouchControls(touchControls);
 
 const ui = { menu, pauseScreen, endingScreen, continueButton, status };
 let game: Phaser.Game | null = null;

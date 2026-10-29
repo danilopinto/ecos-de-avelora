@@ -48,6 +48,7 @@ h1 { font-size: clamp(22px, 4vw, 32px); letter-spacing: -.04em; }
 .page-heading a { color: var(--mint); text-underline-offset: 4px; }
 
 .game-frame {
+  container-type: size;
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -125,4 +126,49 @@ button.primary { color: #112018; background: var(--mint); border-color: var(--mi
 .embed .page-heading, .embed .page-footer { display: none; }
 .embed, .embed body { overflow: hidden; }
 .embed body { min-height: 0; padding: 0; background: #10211b; }
-.embed .game-frame { border: 0; box-shadow: none; }
+.embed .game-frame { width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; box-shadow: none; }
+
+/* Controles de toque: direcional e ações flutuantes, semitransparentes (exibidos só em dispositivos de toque) */
+.touch-controls[hidden] { display: none; }
+.touch-controls {
+  --btn: clamp(44px, 17cqh, 88px);
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 4cqh 4cqh;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.touch-controls button {
+  pointer-events: auto;
+  touch-action: none;
+  min-height: 0;
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
+  border: 2px solid #e9eedc99;
+  border-radius: 50%;
+  color: #e9eedc;
+  background: #10211b73;
+  font-size: calc(var(--btn) * .42);
+  line-height: 1;
+  backdrop-filter: blur(1px);
+}
+.touch-controls button.is-pressed { background: #a5dfb4b3; color: #112018; }
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, var(--btn));
+  grid-template-rows: repeat(3, var(--btn));
+  gap: 0;
+}
+.dpad-up { grid-area: 1 / 2; }
+.dpad-left { grid-area: 2 / 1; }
+.dpad-right { grid-area: 2 / 3; }
+.dpad-down { grid-area: 3 / 2; }
+.actions-pad { display: flex; align-items: flex-end; gap: 2cqh; }
+.actions-pad button { font-size: calc(var(--btn) * .3); font-weight: 700; }
+.actions-pad button[data-key="space"] { width: calc(var(--btn) * 1.5); border-radius: calc(var(--btn) * .5); }
