@@ -120,3 +120,9 @@ button.primary { color: #112018; background: var(--mint); border-color: var(--mi
   .overlay { padding: 16px; }
   .overlay small { max-width: 320px; line-height: 1.7; }
 }
+
+/* Modo incorporado (?embed): exibe somente o quadro do jogo */
+.embed .page-heading, .embed .page-footer { display: none; }
+.embed, .embed body { overflow: hidden; }
+.embed body { min-height: 0; padding: 0; background: #10211b; }
+.embed .game-frame { border: 0; box-shadow: none; }

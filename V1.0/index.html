@@ -46,7 +46,14 @@
     .topbar nav { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: flex-end; font-size: .88rem; }
     .topbar nav a { color: var(--muted); text-decoration: none; }
     .topbar nav a:hover { color: var(--accent); }
-    .hero { max-width: var(--max); margin: auto; padding: 4rem 1.25rem 3rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 2rem; align-items: center; }
+    .hero { max-width: var(--max); margin: auto; padding: 2.5rem 1.25rem 2.5rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: .5rem 2rem; align-items: start; }
+    .hero-title { grid-column: 1 / -1; }
+    .hero-title h1 { margin: .35rem 0 .5rem; font-size: clamp(1.7rem, 4.4vw, 3.1rem); white-space: nowrap; }
+    .hero .lead { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.5; }
+    .hero .pill-row { margin: .6rem 0; }
+    .hero .callout { margin: .6rem 0; padding: .6rem .9rem; font-size: .9rem; line-height: 1.45; }
+    .hero .quick-links { margin-top: .8rem; gap: .45rem; }
+    .hero .quick-links a { padding: .4rem .7rem; font-size: .88rem; }
     .eyebrow { color: var(--accent); text-transform: uppercase; font-size: .78rem; letter-spacing: .18em; font-weight: 800; }
     h1, h2, h3 { line-height: 1.2; }
     h1 { margin: .5rem 0 1rem; font-size: clamp(2.6rem, 7vw, 5.2rem); letter-spacing: -.055em; }
@@ -55,7 +62,7 @@
     .lead { max-width: 58ch; color: var(--muted); font-size: 1.12rem; }
     .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.5rem 0; }
     .pill { border: 1px solid var(--line); color: var(--muted); border-radius: 99px; padding: .35rem .75rem; font-size: .85rem; }
-    .hero-art { width: min(100%, 360px); height: auto; justify-self: end; filter: drop-shadow(0 20px 35px #0008); image-rendering: pixelated; }
+    .hero-game { display: block; overflow: hidden; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: .5rem; background: #10211b; box-shadow: 0 20px 35px #0008; }
     .quick-links { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
     .quick-links a { display: inline-block; padding: .55rem .85rem; border: 1px solid var(--line); border-radius: .65rem; color: var(--accent); text-decoration: none; font-weight: 700; }
     .quick-links a:first-child { color: #101b1a; background: var(--accent); border-color: var(--accent); }
@@ -114,7 +121,7 @@
     footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: .9rem; }
     @media (max-width: 800px) {
       .hero { grid-template-columns: 1fr; padding-top: 2.5rem; }
-      .hero-art { max-width: 300px; margin: auto; }
+      .hero-title h1 { white-space: normal; }
       .reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .layout { grid-template-columns: 1fr; }
       aside { position: static; }
@@ -145,9 +152,11 @@
   </header>
 
   <header class="hero" id="inicio">
-    <div>
+    <div class="hero-title">
       <div class="eyebrow">Diário de desenvolvimento · decisões, experimentos e entregas</div>
-      <h1>Como Ecos de<br>Avelora foi desenvolvido</h1>
+      <h1>Como Ecos de Avelora foi desenvolvido</h1>
+    </div>
+    <div>
       <p class="lead">Um relato cronológico de como uma ideia se tornou uma proposta de jogo, foi planejada em documentos, desenvolvida com apoio de agentes de IA e skills especializadas, e evoluiu por protótipos, revisões e validações.</p>
       <div class="pill-row"><span class="pill">Concepção</span><span class="pill">IA aplicada ao desenvolvimento</span><span class="pill">Planejamento</span><span class="pill">Implementação e validação</span></div>
       <p class="callout"><strong>Objetivo desta página:</strong> explicar o processo e as decisões por trás do projeto, mostrar como a colaboração entre pessoa e IA foi organizada e apontar os artefatos que permitem acompanhar cada etapa. O jogo e sua narrativa são exemplos concretos desse percurso, não o assunto principal.</p>
@@ -155,40 +164,11 @@
         <a href="#processo">Acompanhar o processo</a>
         <a href="#docs-processo">Consultar documentos</a>
         <a href="#agentes">Conhecer agentes e skills</a>
+        <a href="https://github.com/danilopinto/ecos-de-avelora" target="_blank" rel="noopener noreferrer">GitHub do projeto</a>
       </nav>
       <p class="secondary-links"><a href="#evolucao">Ver versões V1</a> · <a href="#evolucao-v2">Ver versões V2</a></p>
     </div>
-    <svg class="hero-art" viewBox="0 0 480 300" role="img" aria-labelledby="art-title art-desc" shape-rendering="crispEdges">
-      <title id="art-title">Ruinas antigas na floresta de Avelora</title>
-      <desc id="art-desc">Ilustracao original em blocos de pixel com floresta, templo e cristal azul brilhante.</desc>
-      <rect width="480" height="300" fill="#172824"/>
-      <rect y="204" width="480" height="96" fill="#354d3b"/>
-      <path d="M0 230h70v-24h48v24h54v-40h34v40h73v-28h45v28h60v-45h32v45h64v70H0z" fill="#526346"/>
-      <path d="M0 270h80v-24h38v24h75v-15h55v15h80v-30h45v30h107v30H0z" fill="#283d32"/>
-      <rect x="154" y="98" width="172" height="119" fill="#7c8061"/>
-      <rect x="176" y="117" width="128" height="100" fill="#b4a77a"/>
-      <path d="M160 98h160L300 69H181z" fill="#d2bd82"/>
-      <rect x="194" y="145" width="24" height="72" fill="#31433a"/>
-      <rect x="262" y="145" width="24" height="72" fill="#31433a"/>
-      <rect x="219" y="170" width="42" height="47" fill="#182824"/>
-      <rect x="234" y="129" width="12" height="28" fill="#83e4db"/>
-      <rect x="228" y="137" width="24" height="12" fill="#83e4db"/>
-      <rect x="234" y="133" width="12" height="20" fill="#c9fff0"/>
-      <g fill="#18372d">
-        <rect x="29" y="126" width="54" height="88"/><rect x="14" y="151" width="84" height="44"/>
-        <rect x="54" y="95" width="19" height="39"/><rect x="382" y="116" width="55" height="97"/>
-        <rect x="365" y="145" width="90" height="47"/><rect x="399" y="81" width="22" height="44"/>
-      </g>
-      <g fill="#72905a">
-        <rect x="35" y="135" width="12" height="12"/><rect x="66" y="160" width="12" height="12"/>
-        <rect x="390" y="127" width="12" height="12"/><rect x="420" y="158" width="12" height="12"/>
-      </g>
-      <path d="M0 221h480" stroke="#9fb67a" stroke-width="5"/>
-      <rect x="102" y="236" width="20" height="26" fill="#c29a63"/>
-      <rect x="107" y="224" width="10" height="15" fill="#e5c58b"/>
-      <rect x="108" y="233" width="8" height="8" fill="#7dd9d4"/>
-      <g fill="#96e5dd" opacity=".8"><rect x="128" y="113" width="4" height="4"/><rect x="346" y="94" width="4" height="4"/><rect x="330" y="243" width="4" height="4"/><rect x="139" y="197" width="4" height="4"/></g>
-    </svg>
+    <iframe class="hero-game" src="../V2.2/?embed=1" title="Jogo Ecos de Avelora (V2.2)" scrolling="no" allow="fullscreen"></iframe>
   </header>
 
   <section class="evolution" id="processo" aria-labelledby="objetivos">

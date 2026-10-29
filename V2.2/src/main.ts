@@ -81,3 +81,9 @@ try {
   continueButton.hidden = true;
   ui.status.textContent = "O armazenamento local não está disponível; uma nova jornada ainda pode ser iniciada.";
 }
+
+// Modo incorporado (?embed): inicia a jornada sem exigir o clique em "Nova jornada".
+if (document.documentElement.classList.contains("embed")) {
+  startNewGame();
+  window.focus();
+}
