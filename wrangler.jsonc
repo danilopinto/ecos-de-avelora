@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ecos-de-avelora",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./_site"
+  }
+}
