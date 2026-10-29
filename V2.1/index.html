@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="Danilo Pinto">
+    <meta name="theme-color" content="#101b18" />
+    <meta name="description" content="Explore as ruínas de Avelora e descubra os ecos do passado." />
+    <title>Ecos de Avelora — V2</title>
+  </head>
+  <body>
+    <main class="app">
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">AVENTURA · PIXEL ART</p>
+          <h1>Ecos de Avelora</h1>
+          <p class="subtitle">A Floresta Esquecida · Versão 2</p>
+        </div>
+        <a href="http://localhost:5199/V1.0/index.html">Voltar à documentação do projeto</a>
+      </header>
+
+      <section class="game-frame" aria-label="Jogo Ecos de Avelora">
+        <div id="game-container"></div>
+        <section class="overlay" id="menu" aria-labelledby="menu-title">
+          <p class="eyebrow">O SINAL AINDA ECOA</p>
+          <h2 id="menu-title">A Floresta Esquecida</h2>
+          <p>Explore as ruínas, desperte o cristal e revele o caminho que existia no passado.</p>
+          <div class="actions">
+            <button class="primary" id="new-game">Nova jornada</button>
+            <button id="continue-game" hidden>Continuar</button>
+          </div>
+          <small>WASD/setas mover · E interagir · Q alternar o tempo · Esc pausar</small>
+        </section>
+        <section class="overlay" id="pause-screen" hidden aria-labelledby="pause-title">
+          <p class="eyebrow">A FLORESTA ESPERA</p>
+          <h2 id="pause-title">Jornada pausada</h2>
+          <div class="actions">
+            <button class="primary" id="resume-game">Continuar</button>
+            <button id="restart-game">Recomeçar</button>
+            <button id="return-menu">Menu</button>
+          </div>
+        </section>
+        <section class="overlay" id="ending-screen" hidden aria-labelledby="ending-title">
+          <p class="eyebrow">ECO RECUPERADO</p>
+          <h2 id="ending-title">A memória encontra o caminho</h2>
+          <p>Além do santuário, uma cidade perdida responde ao cristal. A jornada de Avelora continua.</p>
+          <div class="actions">
+            <button class="primary" id="ending-menu">Voltar ao menu</button>
+            <button id="ending-restart">Jogar novamente</button>
+          </div>
+        </section>
+      </section>
+
+      <footer class="page-footer">
+        <span id="status" role="status" aria-live="polite">640×360 lógico · ampliação pixelada · sem suavização</span>
+        <span>Progresso salvo localmente neste dispositivo.</span>
+        <span>Autor: Danilo Pinto · <a href="mailto:danilo.pinto1@gmail.com">danilo.pinto1@gmail.com</a> · <a href="https://github.com/danilopinto/" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

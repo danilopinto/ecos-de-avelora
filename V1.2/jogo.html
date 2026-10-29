@@ -1,0 +1,1664 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="Danilo Pinto">
+  <meta name="theme-color" content="#111c19">
+  <meta name="description" content="Jogue a primeira fase de Ecos de Avelora, uma aventura em Pixel Art no navegador.">
+  <title>Ecos de Avelora — A Floresta Esquecida</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111c19;
+      --panel: #1d2d27;
+      --line: #405c4d;
+      --text: #edf4e9;
+      --muted: #bfd0c2;
+      --mint: #91d8ad;
+      --gold: #f0cc7b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at 50% 0, #294238 0, transparent 52%),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(100%, 1000px); }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: 0 auto 1rem; }
+    h1 { margin: 0; font-size: clamp(1.15rem, 3vw, 1.8rem); }
+    header p { color: var(--muted); margin: .25rem 0 0; font-size: .9rem; }
+    a { color: var(--mint); }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .screen {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid var(--line);
+      border-radius: .8rem;
+      background: #12231d;
+      box-shadow: 0 24px 75px #0008;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+    .screen-message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      padding: 1.25rem;
+      text-align: center;
+      background: #101b19eF;
+    }
+    .screen-message[hidden] { display: none; }
+    .screen-message h2 { color: var(--mint); margin: 0 0 .5rem; }
+    .screen-message p { max-width: 38rem; color: var(--muted); margin: .35rem auto; }
+    .screen-message .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; margin-top: 1rem; }
+    button {
+      border: 1px solid #668975;
+      border-radius: .5rem;
+      padding: .65rem 1rem;
+      color: var(--text);
+      background: #294438;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--mint); background: #355944; }
+    button.primary { color: #102019; background: var(--mint); border-color: var(--mint); }
+    button.primary:hover { background: #b1e7c4; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .8rem 0; }
+    .toolbar button { padding: .45rem .8rem; font-size: .9rem; }
+    .status { min-height: 1.5em; color: var(--gold); font-size: .9rem; }
+    .help { display: flex; flex-wrap: wrap; gap: .3rem 1rem; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .7rem; background: #15231f; color: var(--muted); font-size: .88rem; }
+    kbd { display: inline-block; min-width: 1.45rem; padding: .03rem .3rem; border: 1px solid #557260; border-radius: .25rem; color: var(--text); background: #243a30; text-align: center; font: 700 .8rem ui-monospace, monospace; }
+    .back { display: inline-block; margin-top: 1rem; text-decoration: none; }
+    @media (max-width: 600px) {
+      body { padding: .75rem; }
+      header { align-items: start; flex-direction: column; }
+      .screen-message { padding: .75rem; }
+      .screen-message p { font-size: .9rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Ecos de Avelora — A Floresta Esquecida</h1>
+        <p>Primeira fase · MVP jogável · Salve o progresso neste dispositivo</p>
+      </div>
+    </header>
+
+    <div class="screen">
+      <canvas id="game" width="640" height="360" aria-label="Jogo Ecos de Avelora. Use as setas ou WASD para se mover e E para interagir." aria-describedby="controls"></canvas>
+      <section class="screen-message" id="menu" aria-labelledby="menu-title">
+        <h2 id="menu-title">Ecos de Avelora</h2>
+        <p>Um sinal misterioso chama você para as ruínas da Floresta Esquecida. Explore, revele ecos do passado e descubra a sequência do santuário.</p>
+        <p>Esta é a primeira fase do MVP. O jogo roda neste navegador sem instalar dependências.</p>
+        <div class="actions">
+          <button class="primary" id="new-game">Começar nova partida</button>
+          <button id="continue-game" hidden>Continuar partida</button>
+        </div>
+      </section>
+      <section class="screen-message" id="pause-screen" aria-labelledby="pause-title" hidden>
+        <h2 id="pause-title">Jogo pausado</h2>
+        <p>Seu progresso fica salvo neste dispositivo.</p>
+        <div class="actions">
+          <button class="primary" id="resume-game">Continuar</button>
+          <button id="restart-game">Reiniciar fase</button>
+        </div>
+      </section>
+      <section class="screen-message" id="ending-screen" aria-labelledby="ending-title" hidden>
+        <h2 id="ending-title">O eco despertou</h2>
+        <p>A memória revela a silhueta de uma cidade perdida e aponta para outro santuário. A jornada de Avelora apenas começou.</p>
+        <p>Fim da primeira fase — A Floresta Esquecida.</p>
+        <div class="actions">
+          <button class="primary" id="ending-menu">Voltar ao menu</button>
+          <button id="ending-restart">Jogar fase novamente</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="toolbar">
+      <button id="pause-button" hidden>Pausar (Esc)</button>
+      <button id="restart-button" hidden>Reiniciar fase</button>
+      <span class="status" id="status" role="status" aria-live="polite"></span>
+    </div>
+    <div class="help" id="controls">
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ou setas: mover</span>
+      <span><kbd>E</kbd> ou <kbd>Espaço</kbd>: interagir</span>
+      <span><kbd>Q</kbd>: alternar passado/presente</span>
+      <span><kbd>Esc</kbd>: pausar</span>
+    </div>
+    <a class="back" href="../V1.0/index.html">← Voltar à documentação do projeto</a>
+    <p class="author" style="margin:.75rem 0 0;font-size:.8rem;opacity:.75">Autor: Danilo Pinto · <a href="mailto:danilo.pinto1@gmail.com">danilo.pinto1@gmail.com</a> · <a href="https://github.com/danilopinto/" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const WIDTH = 320;
+      const HEIGHT = 180;
+      const WORLD = { width: 960, height: 640 };
+      const SAVE_KEY = "ecos-de-avelora-mvp-v1";
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const menu = document.getElementById("menu");
+      const pauseScreen = document.getElementById("pause-screen");
+      const endingScreen = document.getElementById("ending-screen");
+      const continueButton = document.getElementById("continue-game");
+      const pauseButton = document.getElementById("pause-button");
+      const restartButton = document.getElementById("restart-button");
+      const status = document.getElementById("status");
+      const keys = new Set();
+
+      const objects = {
+        inscription: { x: 228, y: 520, radius: 20 },
+        artifact: { x: 380, y: 462, radius: 22 },
+        memory: { x: 552, y: 307, radius: 22 },
+        runes: [
+          { x: 646, y: 306, radius: 20, symbol: "sun", label: "Sol" },
+          { x: 700, y: 306, radius: 20, symbol: "moon", label: "Lua" },
+          { x: 754, y: 306, radius: 20, symbol: "wave", label: "Ondas" }
+        ],
+        core: { x: 700, y: 157, radius: 22 }
+      };
+      const expectedSequence = ["sun", "moon", "wave"];
+      const staticColliders = [
+        { x: 0, y: 0, w: WORLD.width, h: 8 },
+        { x: 0, y: WORLD.height - 8, w: WORLD.width, h: 8 },
+        { x: 0, y: 0, w: 8, h: WORLD.height },
+        { x: WORLD.width - 8, y: 0, w: 8, h: WORLD.height },
+        { x: 0, y: 330, w: 438, h: 46 },
+        { x: 522, y: 330, w: 438, h: 46 },
+        { x: 598, y: 112, w: 10, h: 167 },
+        { x: 852, y: 112, w: 10, h: 167 },
+        { x: 598, y: 112, w: 264, h: 10 },
+        { x: 598, y: 279, w: 74, h: 10 },
+        { x: 714, y: 279, w: 148, h: 10 },
+        { x: 672, y: 267, w: 42, h: 20 }
+      ];
+      const trees = createTrees();
+      const groundDetails = createGroundDetails();
+
+      let mode = "menu";
+      let game = newGame();
+      let dialogue = null;
+      let notice = "";
+      let noticeUntil = 0;
+      let lastSaveAt = 0;
+      let previousFrame = 0;
+      let lastInteractionHint = "";
+      let visualClock = 0;
+      let isMoving = false;
+      let facing = { x: 0, y: 1 };
+
+      function newGame() {
+        return {
+          x: 115,
+          y: 560,
+          time: "present",
+          inscriptionRead: false,
+          artifactAwakened: false,
+          memoryRead: false,
+          puzzleIndex: 0,
+          puzzleSolved: false,
+          endingReached: false
+        };
+      }
+
+      function createTrees() {
+        const result = [];
+        for (let y = 30; y < WORLD.height - 18; y += 27) {
+          for (let x = 24; x < WORLD.width - 12; x += 29) {
+            const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+            const onPath = (x > 80 && x < 510 && Math.abs(y - (560 - (x - 115) * 0.46)) < 42)
+              || (x > 430 && x < 620 && Math.abs(y - 350) < 48)
+              || (x > 500 && x < 700 && Math.abs(y - 320) < 35)
+              || (x > 600 && x < 860 && y > 105 && y < 290)
+              || objects.runes.some(rune => Math.hypot(x - rune.x, y - rune.y) < 34)
+              || (x > 200 && x < 265 && y > 490 && y < 550)
+              || (x > 350 && x < 410 && y > 425 && y < 490)
+              || (x > 525 && x < 580 && y > 280 && y < 335);
+            if (seed > 0.65 && !onPath && !(y > 320 && y < 378)) {
+              result.push({
+                x: x + (seed - 0.5) * 9,
+                y: y + (seed - 0.5) * 7,
+                radius: seed > 0.9 ? 13 : seed > 0.78 ? 10 : 8,
+                shade: seed > 0.87 ? 1 : 0,
+                variant: Math.floor(seed * 9)
+              });
+            }
+          }
+        }
+        return result;
+      }
+
+      function createGroundDetails() {
+        const details = [];
+        for (let y = 15; y < WORLD.height - 10; y += 9) {
+          for (let x = 12; x < WORLD.width - 10; x += 11) {
+            const noise = Math.abs(Math.sin(x * 78.233 + y * 12.9898) * 43758.5453) % 1;
+            if (noise < 0.65) continue;
+            const pathDistance = distanceToPath(x, y);
+            const nearRiver = y > 321 && y < 385;
+            const nearTemple = x > 590 && x < 870 && y > 104 && y < 286;
+            const nearLandmark = Math.hypot(x - objects.inscription.x, y - objects.inscription.y) < 25
+              || Math.hypot(x - objects.artifact.x, y - objects.artifact.y) < 25
+              || Math.hypot(x - objects.memory.x, y - objects.memory.y) < 25;
+            if (nearRiver || nearTemple || nearLandmark || pathDistance < 25) continue;
+            const kind = noise > 0.988 ? "crystal" : noise > 0.957 ? "fern"
+              : noise > 0.93 ? "stone" : noise > 0.905 ? "flower"
+                : noise > 0.86 ? "moss" : noise > 0.83 ? "mushroom"
+                  : noise > 0.72 ? "bush" : "grass";
+            details.push({
+              x: x + (noise - 0.5) * 5,
+              y: y + (noise - 0.5) * 4,
+              kind,
+              shade: Math.floor(noise * 4) % 3,
+              phase: noise * Math.PI * 2,
+              size: noise > 0.96 ? 1.4 : 1
+            });
+          }
+        }
+        return details;
+      }
+
+      function distanceToPath(x, y) {
+        const points = [
+          [105, 565], [195, 520], [330, 480], [455, 400], [480, 350],
+          [515, 318], [590, 310], [620, 278], [700, 268]
+        ];
+        let closest = Infinity;
+        for (let index = 0; index < points.length - 1; index += 1) {
+          const [ax, ay] = points[index];
+          const [bx, by] = points[index + 1];
+          const dx = bx - ax;
+          const dy = by - ay;
+          const lengthSquared = dx * dx + dy * dy;
+          const projection = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / lengthSquared));
+          closest = Math.min(closest, Math.hypot(x - ax - projection * dx, y - ay - projection * dy));
+        }
+        return closest;
+      }
+
+      function setStatus(message, duration = 3600) {
+        notice = message;
+        noticeUntil = performance.now() + duration;
+        status.textContent = message;
+      }
+
+      function objectiveText() {
+        if (!game.inscriptionRead) return "Examine a inscrição antiga";
+        if (!game.artifactAwakened) return "Investigue o cristal azul";
+        if (!game.memoryRead) return "Atravesse a ponte no passado e encontre a memória";
+        if (!game.puzzleSolved) return "Ative os símbolos: Sol, Lua e Ondas";
+        if (!game.endingReached) return "Entre no santuário e examine o núcleo";
+        return "Fase concluída";
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        menu.hidden = nextMode !== "menu";
+        pauseScreen.hidden = nextMode !== "paused";
+        endingScreen.hidden = nextMode !== "ending";
+        pauseButton.hidden = nextMode !== "playing";
+        restartButton.hidden = nextMode !== "playing" && nextMode !== "paused";
+        if (nextMode !== "playing") keys.clear();
+      }
+
+      function showDialogue(title, lines, onComplete) {
+        dialogue = { title, lines: Array.isArray(lines) ? lines : [lines], page: 0, onComplete };
+        keys.clear();
+      }
+
+      function advanceDialogue() {
+        if (!dialogue) return;
+        if (dialogue.page + 1 < dialogue.lines.length) {
+          dialogue.page += 1;
+          return;
+        }
+        const complete = dialogue.onComplete;
+        dialogue = null;
+        if (complete) complete();
+      }
+
+      function startNewGame() {
+        game = newGame();
+        dialogue = null;
+        setMode("playing");
+        saveGame();
+        showDialogue("A Floresta Esquecida", [
+          "Um sinal atravessa as árvores e chama você até as ruínas.",
+          "Encontre a origem. Chegue perto dos objetos e pressione E para examinar."
+        ]);
+        setStatus("Nova partida iniciada.");
+      }
+
+      function validSave(value) {
+        if (!value || typeof value !== "object" || value.version !== 1) return false;
+        if (!Number.isFinite(value.x) || !Number.isFinite(value.y)) return false;
+        if (value.x < 16 || value.x > WORLD.width - 16 || value.y < 16 || value.y > WORLD.height - 16) return false;
+        if (value.time !== "present" && value.time !== "past") return false;
+        if (typeof value.inscriptionRead !== "boolean"
+          || typeof value.artifactAwakened !== "boolean"
+          || typeof value.memoryRead !== "boolean"
+          || typeof value.puzzleSolved !== "boolean"
+          || typeof value.endingReached !== "boolean"
+          || !Number.isInteger(value.puzzleIndex)
+          || value.puzzleIndex < 0
+          || value.puzzleIndex > expectedSequence.length) return false;
+        if ((value.artifactAwakened && !value.inscriptionRead)
+          || (value.memoryRead && !value.artifactAwakened)
+          || (value.puzzleIndex > 0 && !value.memoryRead)
+          || (value.puzzleSolved && value.puzzleIndex !== expectedSequence.length)
+          || (value.endingReached && !value.puzzleSolved)
+          || (value.time === "past" && !value.artifactAwakened)) return false;
+        return true;
+      }
+
+      function saveGame() {
+        const snapshot = {
+          version: 1,
+          x: game.x,
+          y: game.y,
+          time: game.time,
+          inscriptionRead: game.inscriptionRead,
+          artifactAwakened: game.artifactAwakened,
+          memoryRead: game.memoryRead,
+          puzzleIndex: game.puzzleIndex,
+          puzzleSolved: game.puzzleSolved,
+          endingReached: game.endingReached
+        };
+        try {
+          localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+          continueButton.hidden = false;
+          if (notice.startsWith("Não foi possível salvar")) status.textContent = "";
+        } catch (error) {
+          console.error("Falha ao salvar o progresso local.", error);
+          setStatus("Não foi possível salvar neste navegador. Você pode continuar jogando, mas o progresso pode não persistir.", 7000);
+        }
+      }
+
+      function loadGame() {
+        let raw;
+        try {
+          raw = localStorage.getItem(SAVE_KEY);
+        } catch (error) {
+          console.error("Falha ao acessar o salvamento local.", error);
+          setStatus("Não foi possível acessar o salvamento deste navegador. Você ainda pode começar uma nova partida.", 7000);
+          return false;
+        }
+        if (!raw) return false;
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (error) {
+          console.error("O salvamento local contém JSON inválido.", error);
+          setStatus("O salvamento está corrompido. Inicie uma nova partida para continuar.", 7000);
+          return false;
+        }
+        if (!validSave(parsed)) {
+          setStatus("O formato do salvamento é inválido ou incompatível. Inicie uma nova partida.", 7000);
+          return false;
+        }
+        const previousGame = game;
+        game = { ...parsed };
+        if (collides(game.x, game.y, game.time)) {
+          game = previousGame;
+          setStatus("A posição salva não é segura. Inicie uma nova partida para continuar.", 7000);
+          return false;
+        }
+        return true;
+      }
+
+      function continueGame() {
+        if (!loadGame()) return;
+        dialogue = null;
+        if (game.endingReached) {
+          setMode("ending");
+          return;
+        }
+        setMode("playing");
+        setStatus("Progresso restaurado.");
+      }
+
+      function restartGame() {
+        startNewGame();
+      }
+
+      function nearObject(object) {
+        return Math.hypot(game.x - object.x, game.y - object.y) <= object.radius + 7;
+      }
+
+      function currentInteraction() {
+        if (!game.inscriptionRead && nearObject(objects.inscription)) return { id: "inscription", text: "E  Ler inscrição" };
+        if (!game.artifactAwakened && game.inscriptionRead && nearObject(objects.artifact)) return { id: "artifact", text: "E  Tocar o cristal" };
+        if (game.artifactAwakened && !game.memoryRead && nearObject(objects.memory)) {
+          return { id: "memory", text: game.time === "past" ? "E  Observar memória" : "E  Examinar inscrição" };
+        }
+        if (game.memoryRead && !game.puzzleSolved) {
+          const rune = objects.runes.find(item => nearObject(item));
+          if (rune) return { id: `rune-${rune.symbol}`, text: `E  Ativar símbolo: ${rune.label}` };
+        }
+        if (game.puzzleSolved && !game.endingReached && nearObject(objects.core)) return { id: "core", text: "E  Tocar o núcleo" };
+        if (game.artifactAwakened && nearBridge()) return { id: "bridge", text: "Q  Alternar estado temporal" };
+        return null;
+      }
+
+      function nearBridge() {
+        return game.x >= 425 && game.x <= 535 && game.y >= 314 && game.y <= 394;
+      }
+
+      function interact() {
+        if (dialogue) {
+          advanceDialogue();
+          return;
+        }
+        if (mode !== "playing") return;
+        const target = currentInteraction();
+        if (!target) return;
+
+        if (target.id === "inscription") {
+          game.inscriptionRead = true;
+          saveGame();
+          showDialogue("Inscrição antiga", [
+            "A pedra diz: “Quando o cristal despertar, o passado mostrará o caminho que o presente perdeu.”",
+            "Um desenho aponta para o cristal azul mais adiante. Pressione Q para alternar entre os tempos."
+          ]);
+          return;
+        }
+        if (target.id === "artifact") {
+          game.artifactAwakened = true;
+          saveGame();
+          showDialogue("O primeiro eco", [
+            "O cristal pulsa em suas mãos. As ruínas respondem com uma luz distante.",
+            "No passado, uma ponte esquecida volta a existir. Atravesse-a e procure uma memória perto do santuário."
+          ]);
+          return;
+        }
+        if (target.id === "memory") {
+          if (game.time !== "past") {
+            showDialogue("Inscrição apagada", "As marcas quase desapareceram. Talvez o passado revele o que falta.");
+            return;
+          }
+          game.memoryRead = true;
+          saveGame();
+          showDialogue("A memória dos símbolos", [
+            "Uma lembrança mostra três sinais acesos em sequência:",
+            "Sol → Lua → Ondas. Repita a ordem nos símbolos diante do santuário."
+          ]);
+          return;
+        }
+        if (target.id.startsWith("rune-")) {
+          activateRune(target.id.slice(5));
+          return;
+        }
+        if (target.id === "core") {
+          game.endingReached = true;
+          saveGame();
+          showDialogue("O despertar de Avelora", [
+            "O artefato libera uma memória: torres de uma cidade perdida sob um céu sem estrelas.",
+            "Uma voz sussurra o nome de outro santuário. Seu caminho continua além da floresta."
+          ], () => {
+            setMode("ending");
+            saveGame();
+          });
+        }
+      }
+
+      function activateRune(symbol) {
+        const expected = expectedSequence[game.puzzleIndex];
+        if (symbol !== expected) {
+          game.puzzleIndex = 0;
+          saveGame();
+          showDialogue("O eco se desfaz", "A sequência não corresponde à memória. Os símbolos se apagam; tente novamente: Sol, Lua e Ondas.");
+          return;
+        }
+        game.puzzleIndex += 1;
+        if (game.puzzleIndex === expectedSequence.length) {
+          game.puzzleSolved = true;
+          saveGame();
+          showDialogue("O santuário responde", "Os três símbolos brilham em sequência. A porta se abre; o núcleo aguarda no interior.");
+          return;
+        }
+        saveGame();
+        const remaining = expectedSequence.slice(game.puzzleIndex).map(symbolName).join(", ");
+        setStatus(`Símbolo correto. Próximo: ${remaining}.`);
+      }
+
+      function symbolName(symbol) {
+        return { sun: "Sol", moon: "Lua", wave: "Ondas" }[symbol];
+      }
+
+      function switchTime() {
+        if (mode !== "playing" || dialogue) return;
+        if (!game.artifactAwakened) {
+          setStatus("Encontre e desperte o cristal azul antes de alternar os tempos.");
+          return;
+        }
+        const destination = game.time === "present" ? "past" : "present";
+        if (collides(game.x, game.y, destination)) {
+          setStatus("Não é seguro mudar o tempo aqui. Afaste-se da ponte e tente novamente.");
+          return;
+        }
+        game.time = destination;
+        saveGame();
+        setStatus(destination === "past" ? "O passado se revela." : "Você voltou ao presente.");
+      }
+
+      function collides(x, y, time = game.time) {
+        const radius = 5;
+        if (x - radius < 8 || x + radius > WORLD.width - 8 || y - radius < 8 || y + radius > WORLD.height - 8) return true;
+        const box = { x: x - radius, y: y - radius, w: radius * 2, h: radius * 2 };
+        for (const obstacle of staticColliders) {
+          const isClosedDoor = obstacle.x === 672 && obstacle.y === 267;
+          if (isClosedDoor && game.puzzleSolved) continue;
+          if (rectanglesOverlap(box, obstacle)) return true;
+        }
+        for (const tree of trees) {
+          if (Math.hypot(x - tree.x, y - (tree.y + 2)) < radius + tree.radius * 0.55) return true;
+        }
+        if (time === "present" && x > 438 && x < 522 && y > 330 && y < 376) return true;
+        return false;
+      }
+
+      function rectanglesOverlap(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+
+      function movePlayer(delta) {
+        isMoving = false;
+        if (mode !== "playing" || dialogue) return;
+        let dx = 0;
+        let dy = 0;
+        if (keys.has("arrowleft") || keys.has("a")) dx -= 1;
+        if (keys.has("arrowright") || keys.has("d")) dx += 1;
+        if (keys.has("arrowup") || keys.has("w")) dy -= 1;
+        if (keys.has("arrowdown") || keys.has("s")) dy += 1;
+        if (!dx && !dy) return;
+        const length = Math.hypot(dx, dy);
+        facing = { x: dx / length, y: dy / length };
+        const speed = 78;
+        const step = speed * delta / 1000;
+        const nextX = game.x + dx / length * step;
+        const nextY = game.y + dy / length * step;
+        const startX = game.x;
+        const startY = game.y;
+        if (!collides(nextX, game.y)) game.x = nextX;
+        if (!collides(game.x, nextY)) game.y = nextY;
+        isMoving = game.x !== startX || game.y !== startY;
+      }
+
+      function cameraPosition() {
+        return {
+          x: Math.max(0, Math.min(WORLD.width - WIDTH, game.x - WIDTH / 2)),
+          y: Math.max(0, Math.min(WORLD.height - HEIGHT, game.y - HEIGHT / 2))
+        };
+      }
+
+      function draw() {
+        const camera = cameraPosition();
+        ctx.fillStyle = game.time === "past" ? "#233b42" : "#294434";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        drawWorld(camera);
+        drawLighting(camera, visualClock);
+        drawActorsInFront(camera);
+        drawHud();
+        if (dialogue) drawDialogue();
+        const target = currentInteraction();
+        const hint = target ? target.text : "";
+        if (hint && hint !== lastInteractionHint) lastInteractionHint = hint;
+        if (target && !dialogue && mode === "playing") drawPrompt(target.text);
+      }
+
+      function drawWorld(camera) {
+        ctx.save();
+        ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
+        drawGround(camera);
+        drawPath(camera);
+        drawGroundDetails(camera);
+        drawRiver();
+        drawBridge();
+        drawRuinFragments();
+        drawTemple();
+        drawObjects();
+        drawTrees(camera, tree => tree.y <= game.y);
+        drawPlayer();
+        drawTrees(camera, tree => tree.y > game.y);
+        ctx.restore();
+      }
+
+      function drawActorsInFront(camera) {
+        ctx.save();
+        ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
+        drawPlayer();
+        drawTrees(camera, tree => tree.y > game.y);
+        ctx.restore();
+      }
+
+      function drawGround(camera) {
+        const startX = Math.max(0, Math.floor(camera.x / 8) * 8);
+        const startY = Math.max(0, Math.floor(camera.y / 8) * 8);
+        for (let y = startY; y < camera.y + HEIGHT + 8; y += 8) {
+          for (let x = startX; x < camera.x + WIDTH + 8; x += 8) {
+            const noise = Math.abs(Math.sin(x * 0.173 + y * 0.317) * 43758.5453) % 1;
+            const fleck = Math.abs(Math.sin(x * 0.31 - y * 0.17) * 18731.77) % 1;
+            ctx.fillStyle = game.time === "past"
+              ? (noise > 0.87 ? "#263e3b" : noise > 0.58 ? "#243b38" : "#223936")
+              : (noise > 0.87 ? "#293d27" : noise > 0.58 ? "#273b25" : "#253923");
+            ctx.fillRect(x, y, 8, 8);
+            if (fleck > 0.72) {
+              ctx.fillStyle = game.time === "past" ? "#36554c" : "#3a512e";
+              ctx.fillRect(x + (noise > 0.5 ? 2 : 5), y + (fleck > 0.9 ? 2 : 5), 2, 1);
+            } else if (fleck < 0.12) {
+              ctx.fillStyle = "#172a21";
+              ctx.fillRect(x + 1, y + 6, 3, 1);
+            }
+          }
+        }
+      }
+
+      function drawPath(camera) {
+        const points = [
+          [105, 565], [195, 520], [330, 480], [455, 400], [480, 350],
+          [515, 318], [590, 310], [620, 278], [700, 268]
+        ];
+        const drawStroke = (color, width, offsetY = 0) => {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.lineCap = "square";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(points[0][0], points[0][1] + offsetY);
+          for (const [x, y] of points.slice(1)) ctx.lineTo(x, y + offsetY);
+          ctx.stroke();
+        };
+        drawStroke("#15231d", 39, 3);
+        drawStroke(game.time === "past" ? "#596052" : "#514535", 33);
+        drawStroke(game.time === "past" ? "#777764" : "#716044", 27);
+
+        for (let index = 0; index < points.length - 1; index += 1) {
+          const [ax, ay] = points[index];
+          const [bx, by] = points[index + 1];
+          const dx = bx - ax;
+          const dy = by - ay;
+          if (Math.max(ax, bx) < camera.x - 24 || Math.min(ax, bx) > camera.x + WIDTH + 24
+            || Math.max(ay, by) < camera.y - 24 || Math.min(ay, by) > camera.y + HEIGHT + 24) continue;
+          const distance = Math.hypot(dx, dy);
+          const steps = Math.ceil(distance / 8);
+          for (let step = 0; step <= steps; step += 1) {
+            const ratio = step / steps;
+            const x = Math.round(ax + dx * ratio);
+            const y = Math.round(ay + dy * ratio);
+            const length = Math.hypot(dx, dy);
+            const normalX = -dy / length;
+            const normalY = dx / length;
+            for (let row = -1; row <= 1; row += 1) {
+              const stagger = (step + index) % 2 ? 3 : 0;
+              const stoneX = Math.round(x + normalX * row * 8 + stagger);
+              const stoneY = Math.round(y + normalY * row * 8);
+              const stoneNoise = Math.abs(Math.sin((index * 17 + step * 3 + row * 11) * 78.233) * 43758.5453) % 1;
+              const top = game.time === "past"
+                ? ["#a09b7f", "#8b896f", "#777b66", "#b4a98a"][Math.floor(stoneNoise * 4)]
+                : ["#8c7957", "#796849", "#6e6248", "#9a8660"][Math.floor(stoneNoise * 4)];
+              ctx.fillStyle = "#403b30";
+              ctx.fillRect(stoneX - 4, stoneY - 3, 8, 7);
+              ctx.fillStyle = top;
+              ctx.fillRect(stoneX - 3, stoneY - 3, 7, 5);
+              ctx.fillStyle = game.time === "past" ? "#c2b99a" : "#b09b70";
+              ctx.fillRect(stoneX - 2, stoneY - 3, 4, 1);
+              if (stoneNoise > 0.73) {
+                ctx.fillStyle = game.time === "past" ? "#56745d" : "#586344";
+                ctx.fillRect(stoneX - 2, stoneY + 1, 3, 1);
+              }
+              ctx.fillStyle = "#554b38";
+              ctx.fillRect(stoneX + 2, stoneY, 1, 2);
+            }
+          }
+        }
+      }
+
+      function drawGroundDetails(camera) {
+        for (const detail of groundDetails) {
+          if (detail.x < camera.x - 10 || detail.x > camera.x + WIDTH + 10
+            || detail.y < camera.y - 10 || detail.y > camera.y + HEIGHT + 10) continue;
+          const x = Math.round(detail.x);
+          const y = Math.round(detail.y);
+          if (detail.kind === "flower") {
+            const bloom = Math.sin(visualClock / 440 + detail.phase) > 0.15;
+            ctx.fillStyle = game.time === "past" ? "#43665a" : "#4b633b";
+            ctx.fillRect(x, y + 2, 2, 4);
+            ctx.fillRect(x - 2, y + 3, 2, 1);
+            ctx.fillStyle = bloom ? ["#dfd08c", "#ce9d89", "#a8c8a0"][detail.shade] : "#8b9d67";
+            ctx.fillRect(x - 1, y - 1, 4, 3);
+            ctx.fillStyle = "#f2e7b4";
+            if (bloom) ctx.fillRect(x, y, 1, 1);
+          } else if (detail.kind === "moss") {
+            ctx.fillStyle = game.time === "past" ? "#38594e" : "#425637";
+            ctx.fillRect(x - 3, y, 8, 3);
+            ctx.fillStyle = game.time === "past" ? "#648771" : "#71864c";
+            ctx.fillRect(x - 2, y - 1, 3, 2);
+            ctx.fillRect(x + 2, y + 1, 3, 2);
+            ctx.fillStyle = game.time === "past" ? "#95a879" : "#a0a65b";
+            ctx.fillRect(x - 1, y, 1, 1);
+          } else if (detail.kind === "stone") {
+            ctx.fillStyle = "#18251e";
+            ctx.fillRect(x - 4, y + 2, 9, 3);
+            ctx.fillStyle = detail.shade === 1 ? "#686957" : "#555b4a";
+            ctx.fillRect(x - 3, y - 1, 7, 4);
+            ctx.fillStyle = "#959077";
+            ctx.fillRect(x - 2, y - 1, 4, 1);
+            ctx.fillStyle = game.time === "past" ? "#55735e" : "#596a3d";
+            ctx.fillRect(x + 1, y + 1, 2, 1);
+            ctx.fillStyle = "#b8a77d";
+            ctx.fillRect(x - 4, y + 3, 2, 1);
+          } else if (detail.kind === "fern") {
+            const leaf = game.time === "past" ? "#74a37a" : "#78964c";
+            const shadow = game.time === "past" ? "#315846" : "#344d2c";
+            ctx.fillStyle = "#19291f";
+            ctx.fillRect(x - 5, y + 4, 11, 2);
+            ctx.fillStyle = shadow;
+            ctx.fillRect(x, y, 1, 5);
+            ctx.fillRect(x - 4, y - 1, 4, 2);
+            ctx.fillRect(x + 1, y - 3, 4, 2);
+            ctx.fillRect(x - 5, y + 2, 4, 2);
+            ctx.fillRect(x + 1, y + 1, 5, 2);
+            ctx.fillStyle = leaf;
+            ctx.fillRect(x - 4, y - 2, 3, 2);
+            ctx.fillRect(x + 1, y - 4, 3, 2);
+            ctx.fillRect(x - 4, y + 1, 3, 2);
+            ctx.fillRect(x + 2, y, 4, 2);
+            ctx.fillStyle = game.time === "past" ? "#a7c786" : "#b0b866";
+            ctx.fillRect(x - 3, y - 1, 1, 1);
+            ctx.fillRect(x + 2, y - 3, 1, 1);
+          } else if (detail.kind === "mushroom") {
+            ctx.fillStyle = "#d2c098";
+            ctx.fillRect(x, y, 1, 4);
+            ctx.fillRect(x - 1, y + 3, 3, 1);
+            ctx.fillStyle = detail.shade === 1 ? "#a87559" : "#c18468";
+            ctx.fillRect(x - 2, y - 1, 5, 2);
+            ctx.fillStyle = "#f0d2a0";
+            ctx.fillRect(x - 1, y - 1, 1, 1);
+            ctx.fillStyle = "#263c2a";
+            ctx.fillRect(x - 4, y + 4, 8, 1);
+          } else if (detail.kind === "bush") {
+            const deep = game.time === "past" ? "#1c4538" : "#203c24";
+            const mid = game.time === "past" ? "#2d6647" : "#35562b";
+            const light = game.time === "past" ? "#57915a" : "#64813a";
+            ctx.fillStyle = "#17251b";
+            ctx.fillRect(x - 6, y + 6, 5, 2);
+            ctx.fillRect(x + 1, y + 7, 6, 2);
+            ctx.fillRect(x - 9, y + 3, 3, 3);
+            ctx.fillRect(x + 5, y + 4, 4, 3);
+            ctx.fillStyle = deep;
+            ctx.fillRect(x - 8, y, 8, 7);
+            ctx.fillRect(x - 4, y - 3, 9, 9);
+            ctx.fillRect(x + 2, y - 1, 8, 7);
+            ctx.fillRect(x - 3, y + 2, 9, 5);
+            ctx.fillStyle = mid;
+            ctx.fillRect(x - 7, y - 1, 6, 5);
+            ctx.fillRect(x - 2, y - 4, 5, 6);
+            ctx.fillRect(x + 3, y - 1, 6, 5);
+            ctx.fillRect(x - 2, y + 2, 5, 4);
+            ctx.fillStyle = light;
+            ctx.fillRect(x - 6, y - 1, 2, 2);
+            ctx.fillRect(x - 1, y - 3, 2, 2);
+            ctx.fillRect(x + 4, y - 1, 2, 2);
+            ctx.fillRect(x - 1, y + 2, 2, 2);
+            ctx.fillStyle = game.time === "past" ? "#a7bb68" : "#b1b85b";
+            if (detail.shade === 1) ctx.fillRect(x + 2, y + 3, 2, 1);
+          } else if (detail.kind === "crystal") {
+            drawCrystalCluster(x, y, detail.size);
+          } else {
+            const grass = game.time === "past" ? "#52766a" : "#536d43";
+            const light = game.time === "past" ? "#8ca98a" : "#91a65b";
+            ctx.fillStyle = "#19291f";
+            ctx.fillRect(x - 2, y + 3, 6, 1);
+            ctx.fillStyle = grass;
+            ctx.fillRect(x - 1, y, 1, 4);
+            ctx.fillRect(x + 1, y - 2, 1, 5);
+            ctx.fillRect(x + 3, y + 1, 1, 3);
+            ctx.fillStyle = light;
+            ctx.fillRect(x - 1, y, 1, 2);
+            ctx.fillRect(x + 1, y - 2, 1, 2);
+            if (detail.shade === 2) {
+              ctx.fillStyle = "#c7b879";
+              ctx.fillRect(x + 4, y - 2, 1, 1);
+            }
+          }
+        }
+      }
+
+      function drawCrystalCluster(x, y, size = 1) {
+        const scale = size;
+        ctx.fillStyle = "#14271f";
+        ctx.fillRect(x - 6 * scale, y + 4 * scale, 14 * scale, 3 * scale);
+        ctx.fillStyle = "#263f34";
+        ctx.fillRect(x - 5 * scale, y + 2 * scale, 12 * scale, 3 * scale);
+        ctx.fillStyle = "#287c77";
+        ctx.fillRect(x - 5 * scale, y - 2 * scale, 4 * scale, 6 * scale);
+        ctx.fillRect(x + 1 * scale, y - 5 * scale, 4 * scale, 9 * scale);
+        ctx.fillStyle = "#54c9bd";
+        ctx.fillRect(x - 4 * scale, y - 5 * scale, 3 * scale, 4 * scale);
+        ctx.fillRect(x + 2 * scale, y - 9 * scale, 3 * scale, 5 * scale);
+        ctx.fillStyle = "#a4fff0";
+        ctx.fillRect(x - 4 * scale, y - 4 * scale, scale, 3 * scale);
+        ctx.fillRect(x + 2 * scale, y - 8 * scale, scale, 4 * scale);
+        ctx.fillStyle = "#dbfff1";
+        ctx.fillRect(x - 3 * scale, y - 5 * scale, scale, scale);
+        ctx.fillRect(x + 3 * scale, y - 9 * scale, scale, scale);
+        ctx.fillStyle = "#9bb77b";
+        ctx.fillRect(x - 7 * scale, y + 3 * scale, 2 * scale, scale);
+      }
+
+      function drawRiver() {
+        ctx.fillStyle = "#1b3436";
+        ctx.fillRect(0, 330, WORLD.width, 46);
+        ctx.fillStyle = game.time === "past" ? "#365c5d" : "#305052";
+        ctx.fillRect(0, 333, WORLD.width, 39);
+        for (let x = 0; x < WORLD.width; x += 21) {
+          const drift = Math.floor(visualClock / 150 + x / 21) % 3;
+          const y = 338 + (Math.floor(x / 21) % 3) * 12 + drift;
+          ctx.fillStyle = game.time === "past" ? "#86c3b4" : "#628c7c";
+          ctx.fillRect(x, y, 8 + drift * 2, 1);
+          ctx.fillStyle = "#203e40";
+          ctx.fillRect(x + 5, y + 2, 6, 1);
+        }
+        ctx.fillStyle = "#61715c";
+        ctx.fillRect(0, 329, WORLD.width, 3);
+        ctx.fillRect(0, 374, WORLD.width, 3);
+        ctx.fillStyle = "#9b9873";
+        for (let x = 12; x < WORLD.width; x += 49) {
+          ctx.fillRect(x, 326, 8, 3);
+          ctx.fillRect(x + 18, 376, 11, 2);
+        }
+      }
+
+      function drawBridge() {
+        if (game.time === "past") {
+          ctx.fillStyle = "#433b2d";
+          ctx.fillRect(438, 330, 84, 46);
+          ctx.fillStyle = "#65513a";
+          ctx.fillRect(441, 332, 78, 42);
+          for (let row = 0; row < 5; row += 1) {
+            const y = 333 + row * 8;
+            const offset = row % 2 ? 0 : 5;
+            for (let x = 443 + offset; x < 518; x += 13) {
+              ctx.fillStyle = "#302e27";
+              ctx.fillRect(x, y + 1, 12, 7);
+              ctx.fillStyle = row % 2 ? "#a17e4d" : "#b28d59";
+              ctx.fillRect(x + 1, y, 10, 6);
+              ctx.fillStyle = "#d5b77b";
+              ctx.fillRect(x + 2, y, 6, 1);
+              ctx.fillStyle = "#776343";
+              ctx.fillRect(x + 7, y + 4, 3, 1);
+            }
+          }
+          ctx.fillStyle = "#49392b";
+          ctx.fillRect(438, 330, 4, 46);
+          ctx.fillRect(518, 330, 4, 46);
+          ctx.fillStyle = "#d7bd85";
+          ctx.fillRect(436, 328, 8, 4);
+          ctx.fillRect(516, 328, 8, 4);
+          ctx.fillRect(436, 374, 8, 4);
+          ctx.fillRect(516, 374, 8, 4);
+          ctx.fillStyle = "#8ca06a";
+          ctx.fillRect(443, 330, 5, 2);
+          ctx.fillRect(512, 374, 7, 2);
+        } else {
+          ctx.fillStyle = "#403d32";
+          ctx.fillRect(438, 330, 84, 46);
+          ctx.fillStyle = "#656050";
+          ctx.fillRect(443, 333, 29, 12);
+          ctx.fillRect(480, 349, 33, 18);
+          ctx.fillRect(457, 359, 20, 11);
+          ctx.fillStyle = "#aaa083";
+          ctx.fillRect(445, 333, 18, 2);
+          ctx.fillRect(482, 349, 22, 2);
+          ctx.fillStyle = "#293733";
+          ctx.fillRect(474, 334, 5, 12);
+          ctx.fillRect(452, 350, 6, 8);
+          ctx.fillStyle = "#769169";
+          ctx.fillRect(485, 365, 5, 2);
+        }
+      }
+
+      function drawRuinFragments() {
+        const stone = game.time === "past" ? "#687767" : "#4a4d3b";
+        const light = game.time === "past" ? "#a0a88b" : "#807c5c";
+        const moss = game.time === "past" ? "#4d775d" : "#53643c";
+        for (const [x, y, width] of [[161, 458, 17], [304, 423, 20], [567, 393, 16], [574, 408, 13]]) {
+          ctx.fillStyle = "#17251d";
+          ctx.fillRect(x - 3, y + 11, width + 7, 4);
+          ctx.fillStyle = "#383c30";
+          ctx.fillRect(x - 2, y + 1, width + 3, 11);
+          ctx.fillStyle = stone;
+          ctx.fillRect(x, y, width, 10);
+          ctx.fillRect(x + 2, y - 3, width - 4, 4);
+          ctx.fillStyle = light;
+          ctx.fillRect(x + 2, y, width - 5, 2);
+          ctx.fillStyle = "#333a2e";
+          ctx.fillRect(x + 5, y + 4, 1, 5);
+          ctx.fillRect(x + width - 5, y + 3, 1, 5);
+          ctx.fillStyle = moss;
+          ctx.fillRect(x + 2, y - 1, 4, 2);
+          ctx.fillRect(x + width - 5, y + 8, 3, 2);
+        }
+
+        ctx.fillStyle = "#18241d";
+        ctx.fillRect(292, 390, 21, 6);
+        ctx.fillStyle = "#503c2d";
+        ctx.fillRect(296, 378, 14, 14);
+        ctx.fillStyle = "#79543a";
+        ctx.fillRect(298, 376, 10, 3);
+        ctx.fillRect(295, 380, 2, 8);
+        ctx.fillStyle = "#a8794a";
+        ctx.fillRect(300, 379, 6, 2);
+        ctx.fillStyle = "#302e24";
+        ctx.fillRect(299, 383, 8, 6);
+        ctx.fillStyle = "#c0905b";
+        ctx.fillRect(298, 378, 2, 7);
+        ctx.fillStyle = "#718052";
+        ctx.fillRect(307, 386, 3, 2);
+      }
+
+      function drawTemple() {
+        const stone = game.time === "past" ? "#65756a" : "#4b4b3b";
+        const highlight = game.time === "past" ? "#9ca998" : "#77745a";
+        const shadow = game.time === "past" ? "#3b514b" : "#333a30";
+        ctx.fillStyle = "#1c2922";
+        ctx.fillRect(591, 107, 278, 177);
+        ctx.fillStyle = stone;
+        ctx.fillRect(598, 112, 264, 167);
+        ctx.fillStyle = highlight;
+        ctx.fillRect(610, 124, 240, 142);
+        ctx.fillStyle = shadow;
+        ctx.fillRect(630, 143, 200, 112);
+        ctx.fillStyle = game.time === "past" ? "#7d8976" : "#69644d";
+        ctx.fillRect(636, 149, 188, 100);
+        ctx.fillStyle = game.time === "past" ? "#68756b" : "#53533f";
+        for (let row = 0; row < 5; row += 1) {
+          const y = 126 + row * 22;
+          const offset = row % 2 ? 0 : 13;
+          for (let x = 603 + offset; x < 850; x += 28) {
+            const grain = Math.abs(Math.sin(x * 0.41 + row * 17.7) * 9137.31) % 1;
+            const block = game.time === "past"
+              ? ["#68756b", "#718071", "#5e7065", "#7b8270"][Math.floor(grain * 4)]
+              : ["#53533f", "#5c5944", "#494d3d", "#62604a"][Math.floor(grain * 4)];
+            ctx.fillStyle = "#333b31";
+            ctx.fillRect(x - 1, y + 1, 25, 19);
+            ctx.fillStyle = block;
+            ctx.fillRect(x, y, 24, 18);
+            ctx.fillStyle = highlight;
+            ctx.fillRect(x + 2, y + 2, 12 + Math.floor(grain * 7), 2);
+            ctx.fillRect(x + 2, y + 4, 2, 3);
+            ctx.fillStyle = shadow;
+            ctx.fillRect(x + 3, y + 15, 19, 2);
+            ctx.fillRect(x + 17, y + 7, 1, 4);
+            if (grain > 0.66) {
+              ctx.fillStyle = game.time === "past" ? "#526d59" : "#536344";
+              ctx.fillRect(x + 6, y + 11, 8, 3);
+              ctx.fillRect(x + 8, y + 9, 5, 2);
+              ctx.fillStyle = game.time === "past" ? "#79936b" : "#74844a";
+              ctx.fillRect(x + 7, y + 11, 4, 1);
+            }
+          }
+        }
+        ctx.fillStyle = game.time === "past" ? "#b2c0a4" : "#928566";
+        ctx.fillRect(614, 118, 231, 6);
+        ctx.fillStyle = shadow;
+        ctx.fillRect(614, 124, 231, 3);
+        for (const x of [620, 832]) {
+          ctx.fillStyle = "#202c24";
+          ctx.fillRect(x - 4, 130, 16, 139);
+          ctx.fillStyle = game.time === "past" ? "#86917c" : "#706b4f";
+          ctx.fillRect(x, 134, 8, 127);
+          ctx.fillStyle = highlight;
+          ctx.fillRect(x + 1, 136, 2, 121);
+          ctx.fillStyle = shadow;
+          ctx.fillRect(x + 6, 135, 3, 125);
+          ctx.fillStyle = game.time === "past" ? "#58685a" : "#454736";
+          ctx.fillRect(x + 2, 149, 4, 2);
+          ctx.fillRect(x + 2, 183, 4, 2);
+          ctx.fillRect(x + 2, 218, 4, 2);
+          ctx.fillStyle = "#343a2d";
+          ctx.fillRect(x - 3, 130, 14, 7);
+          ctx.fillRect(x - 5, 258, 18, 8);
+          ctx.fillStyle = highlight;
+          ctx.fillRect(x - 3, 131, 10, 2);
+          ctx.fillRect(x - 4, 259, 13, 2);
+          ctx.fillStyle = game.time === "past" ? "#55775a" : "#596b3f";
+          ctx.fillRect(x - 3, 253, 3, 3);
+          ctx.fillRect(x + 7, 163, 3, 4);
+          ctx.fillRect(x + 7, 168, 2, 3);
+        }
+        ctx.fillStyle = "#333d34";
+        ctx.fillRect(660, 128, 64, 10);
+        ctx.fillStyle = highlight;
+        ctx.fillRect(665, 127, 54, 3);
+        ctx.fillStyle = shadow;
+        ctx.fillRect(668, 138, 48, 6);
+        ctx.fillStyle = game.time === "past" ? "#8ca293" : "#716e53";
+        ctx.fillRect(644, 153, 6, 37);
+        ctx.fillRect(810, 153, 6, 37);
+        ctx.fillStyle = game.time === "past" ? "#53685e" : "#414737";
+        ctx.fillRect(650, 153, 6, 37);
+        ctx.fillRect(804, 153, 6, 37);
+        ctx.fillStyle = "#252f29";
+        ctx.fillRect(678, 151, 30, 87);
+        ctx.fillStyle = game.time === "past" ? "#89947d" : "#706b50";
+        ctx.fillRect(672, 150, 42, 5);
+        ctx.fillRect(672, 235, 42, 5);
+        ctx.fillStyle = game.time === "past" ? "#52685c" : "#414637";
+        ctx.fillRect(675, 155, 4, 77);
+        ctx.fillRect(707, 155, 4, 77);
+        ctx.fillStyle = game.time === "past" ? "#739181" : "#59634b";
+        ctx.fillRect(680, 157, 2, 72);
+        ctx.fillRect(704, 157, 2, 72);
+        ctx.fillStyle = game.time === "past" ? "#66766a" : "#53533f";
+        ctx.fillRect(673, 145, 40, 8);
+        ctx.fillRect(673, 235, 40, 8);
+        if (game.puzzleSolved) {
+          ctx.fillStyle = "#345b50";
+          ctx.fillRect(672, 245, 42, 34);
+          ctx.fillStyle = "#a5f3d5";
+          ctx.fillRect(687, 250, 12, 29);
+          ctx.fillStyle = "#ebd58b";
+          ctx.fillRect(699, 263, 3, 3);
+        } else {
+          ctx.fillStyle = "#263d38";
+          ctx.fillRect(672, 245, 42, 34);
+          ctx.fillStyle = "#68c7b2";
+          ctx.fillRect(679, 251, 28, 5);
+        }
+        drawTempleTorch(635, 198);
+        drawTempleTorch(825, 198);
+        ctx.fillStyle = game.time === "past" ? "#9fc7ad" : "#827a58";
+        ctx.fillRect(654, 170, 2, 2);
+        ctx.fillRect(800, 170, 2, 2);
+        ctx.fillRect(654, 181, 2, 2);
+        ctx.fillRect(800, 181, 2, 2);
+      }
+
+      function drawTempleTorch(x, y) {
+        const flicker = Math.sin(visualClock / 85 + x) > 0;
+        ctx.fillStyle = "#37382e";
+        ctx.fillRect(x - 3, y + 4, 7, 4);
+        ctx.fillStyle = "#a38a5c";
+        ctx.fillRect(x - 1, y - 3, 3, 8);
+        ctx.fillStyle = flicker ? "#f2b953" : "#df8740";
+        ctx.fillRect(x - 2, y - 7, 5, 6);
+        ctx.fillStyle = "#ffe5a0";
+        ctx.fillRect(x - 1, y - 5, 2, 3);
+      }
+
+      function drawObjects() {
+        drawInscription(objects.inscription);
+        drawArtifact(objects.artifact);
+        drawMemory(objects.memory);
+        for (let index = 0; index < objects.runes.length; index += 1) {
+          drawRune(objects.runes[index], index);
+        }
+        drawCore(objects.core);
+      }
+
+      function drawInscription(object) {
+        ctx.fillStyle = "#202921";
+        ctx.fillRect(object.x - 13, object.y + 8, 27, 5);
+        ctx.fillStyle = "#595846";
+        ctx.fillRect(object.x - 13, object.y + 5, 26, 7);
+        ctx.fillStyle = "#78745c";
+        ctx.fillRect(object.x - 11, object.y + 5, 21, 2);
+        ctx.fillStyle = "#414436";
+        ctx.fillRect(object.x - 10, object.y - 14, 20, 22);
+        ctx.fillStyle = game.inscriptionRead ? "#aaa47b" : "#c8ba8c";
+        ctx.fillRect(object.x - 8, object.y - 13, 16, 19);
+        ctx.fillStyle = "#dfd2a5";
+        ctx.fillRect(object.x - 7, object.y - 12, 12, 2);
+        ctx.fillStyle = "#777356";
+        ctx.fillRect(object.x - 5, object.y - 8, 9, 1);
+        ctx.fillRect(object.x - 4, object.y - 4, 8, 1);
+        ctx.fillRect(object.x - 6, object.y, 10, 1);
+        ctx.fillStyle = game.inscriptionRead ? "#74704f" : "#b2a77c";
+        ctx.fillRect(object.x - 2, object.y - 10, 1, 2);
+        ctx.fillRect(object.x + 3, object.y - 2, 1, 2);
+      }
+
+      function drawArtifact(object) {
+        ctx.fillStyle = "#182620";
+        ctx.fillRect(object.x - 17, object.y + 10, 34, 7);
+        ctx.fillStyle = "#26352b";
+        ctx.fillRect(object.x - 19, object.y + 8, 38, 3);
+        ctx.fillStyle = "#475347";
+        ctx.fillRect(object.x - 15, object.y + 6, 30, 7);
+        ctx.fillStyle = "#829073";
+        ctx.fillRect(object.x - 12, object.y + 3, 24, 4);
+        ctx.fillStyle = "#a2966c";
+        ctx.fillRect(object.x - 9, object.y, 18, 4);
+        ctx.fillStyle = "#c3b887";
+        ctx.fillRect(object.x - 6, object.y, 12, 1);
+        ctx.fillStyle = "#283c37";
+        ctx.fillRect(object.x - 9, object.y - 4, 18, 6);
+        ctx.fillStyle = "#1b302b";
+        ctx.fillRect(object.x - 8, object.y - 7, 16, 8);
+        ctx.fillStyle = game.artifactAwakened ? "#347c77" : "#285d60";
+        ctx.fillRect(object.x - 7, object.y - 8, 14, 9);
+        ctx.fillStyle = game.artifactAwakened ? "#57cfc3" : "#39969a";
+        ctx.fillRect(object.x - 5, object.y - 14, 10, 8);
+        ctx.fillRect(object.x - 3, object.y - 17, 6, 4);
+        ctx.fillRect(object.x - 7, object.y - 10, 14, 5);
+        ctx.fillStyle = game.artifactAwakened ? "#a5fff0" : "#75d8d1";
+        ctx.fillRect(object.x - 3, object.y - 14, 3, 9);
+        ctx.fillRect(object.x - 5, object.y - 9, 2, 4);
+        ctx.fillStyle = "#e0fff0";
+        ctx.fillRect(object.x - 2, object.y - 15, 1, 4);
+        ctx.fillStyle = game.artifactAwakened ? "#b2fff0" : "#7ad4cc";
+        ctx.fillRect(object.x + 2, object.y - 12, 2, 4);
+        ctx.fillStyle = "#27554f";
+        ctx.fillRect(object.x - 8, object.y - 6, 2, 3);
+        ctx.fillRect(object.x + 6, object.y - 5, 2, 3);
+        ctx.fillStyle = "#edcf7e";
+        ctx.fillRect(object.x - 1, object.y + 1, 2, 2);
+        ctx.fillStyle = "#719b80";
+        ctx.fillRect(object.x - 12, object.y + 4, 2, 2);
+        ctx.fillRect(object.x + 10, object.y + 4, 2, 2);
+        ctx.fillStyle = "#edcf7e";
+        ctx.fillRect(object.x - 13, object.y - 3, 1, 1);
+        ctx.fillRect(object.x + 12, object.y + 1, 1, 1);
+        if (game.artifactAwakened && Math.sin(visualClock / 100) > -0.2) {
+          ctx.fillStyle = "#e5fff3";
+          ctx.fillRect(object.x - 12, object.y - 16, 1, 1);
+          ctx.fillRect(object.x + 10, object.y - 19, 2, 2);
+          ctx.fillRect(object.x + 15, object.y - 8, 1, 1);
+        }
+      }
+
+      function drawMemory(object) {
+        ctx.fillStyle = "#202b26";
+        ctx.fillRect(object.x - 13, object.y + 8, 27, 5);
+        ctx.fillStyle = game.time === "past" ? "#9fae91" : "#5a6251";
+        ctx.fillRect(object.x - 11, object.y + 5, 23, 6);
+        ctx.fillStyle = game.time === "past" ? "#cad1ad" : "#8a8869";
+        ctx.fillRect(object.x - 8, object.y + 2, 17, 4);
+        ctx.fillStyle = "#4e574b";
+        ctx.fillRect(object.x - 7, object.y - 13, 14, 17);
+        ctx.fillStyle = game.time === "past" ? "#b9d7ae" : "#77775e";
+        ctx.fillRect(object.x - 5, object.y - 11, 10, 13);
+        ctx.fillStyle = game.time === "past" ? "#559a85" : "#525946";
+        ctx.fillRect(object.x - 3, object.y - 8, 6, 1);
+        ctx.fillRect(object.x - 3, object.y - 3, 6, 1);
+        ctx.fillRect(object.x - 3, object.y, 5, 1);
+        if (game.time === "past") {
+          ctx.fillStyle = "#e7d180";
+          ctx.fillRect(object.x - 2, object.y - 16, 4, 3);
+          ctx.fillRect(object.x - 5, object.y - 15, 2, 1);
+          ctx.fillRect(object.x + 4, object.y - 15, 2, 1);
+        }
+      }
+
+      function drawRune(rune, index) {
+        const lit = index < game.puzzleIndex || game.puzzleSolved;
+        ctx.fillStyle = "#1e2924";
+        ctx.fillRect(rune.x - 14, rune.y - 13, 29, 29);
+        ctx.fillStyle = game.time === "past" ? "#938c6c" : "#625e48";
+        ctx.fillRect(rune.x - 12, rune.y - 12, 25, 25);
+        ctx.fillStyle = "#252f29";
+        ctx.fillRect(rune.x - 9, rune.y - 9, 19, 19);
+        ctx.fillStyle = lit ? "#7bcbbb" : game.time === "past" ? "#708d7a" : "#585f4d";
+        ctx.fillRect(rune.x - 7, rune.y - 7, 15, 15);
+        ctx.fillStyle = lit ? "#c1f7d9" : game.time === "past" ? "#a2a886" : "#807d5d";
+        ctx.fillRect(rune.x - 4, rune.y - 5, 10, 9);
+        ctx.fillStyle = lit ? "#f7edb4" : "#404c3e";
+        drawSymbol(rune.symbol, rune.x, rune.y, ctx.fillStyle);
+        ctx.fillStyle = "#d0bd85";
+        ctx.fillRect(rune.x - 11, rune.y - 11, 2, 2);
+        ctx.fillRect(rune.x + 9, rune.y + 9, 2, 2);
+      }
+
+      function drawSymbol(symbol, x, y, color) {
+        ctx.fillStyle = color;
+        if (symbol === "sun") {
+          ctx.fillRect(x - 1, y - 6, 3, 12);
+          ctx.fillRect(x - 6, y - 1, 12, 3);
+          ctx.fillRect(x - 4, y - 4, 8, 8);
+          ctx.fillStyle = "#f3d987";
+          ctx.fillRect(x - 1, y - 1, 3, 3);
+        } else if (symbol === "moon") {
+          ctx.fillRect(x - 3, y - 6, 5, 12);
+          ctx.fillRect(x - 5, y - 4, 8, 8);
+          ctx.fillStyle = "#708d7a";
+          ctx.fillRect(x, y - 5, 5, 10);
+        } else {
+          ctx.fillRect(x - 6, y - 4, 5, 2);
+          ctx.fillRect(x - 2, y - 1, 5, 2);
+          ctx.fillRect(x + 2, y + 2, 5, 2);
+        }
+      }
+
+      function drawCore(object) {
+        ctx.fillStyle = "#202c25";
+        ctx.fillRect(object.x - 18, object.y + 11, 36, 7);
+        ctx.fillStyle = "#565943";
+        ctx.fillRect(object.x - 16, object.y + 5, 32, 8);
+        ctx.fillStyle = "#9a8f67";
+        ctx.fillRect(object.x - 12, object.y + 2, 24, 5);
+        ctx.fillStyle = "#333f36";
+        ctx.fillRect(object.x - 10, object.y - 1, 20, 4);
+        ctx.fillStyle = game.puzzleSolved ? "#53c7c0" : "#536358";
+        ctx.fillRect(object.x - 6, object.y - 15, 12, 16);
+        ctx.fillRect(object.x - 10, object.y - 9, 20, 8);
+        ctx.fillStyle = game.puzzleSolved ? "#e3fff0" : "#7c9479";
+        ctx.fillRect(object.x - 2, object.y - 12, 4, 10);
+        ctx.fillStyle = "#d7c481";
+        ctx.fillRect(object.x - 14, object.y + 4, 2, 2);
+        ctx.fillRect(object.x + 12, object.y + 4, 2, 2);
+        if (game.puzzleSolved) {
+          ctx.fillStyle = "#85dfd0";
+          ctx.fillRect(object.x - 11, object.y - 19, 2, 3);
+          ctx.fillRect(object.x + 10, object.y - 22, 2, 3);
+        }
+      }
+
+      function drawTrees(camera, predicate) {
+        const palette = game.time === "past"
+          ? ["#102c2b", "#164039", "#205043", "#33705a", "#57906b"]
+          : ["#10251a", "#18351f", "#244529", "#356032", "#5a7940"];
+        const leafLight = game.time === "past" ? "#83a970" : "#a2ad58";
+        for (const tree of trees) {
+          if (!predicate(tree)
+            || tree.x < camera.x - 28 || tree.x > camera.x + WIDTH + 28
+            || tree.y < camera.y - 32 || tree.y > camera.y + HEIGHT + 24) continue;
+          const x = Math.round(tree.x);
+          const y = Math.round(tree.y);
+          const r = tree.radius + 3;
+          const trunkColor = game.time === "past" ? "#3e4736" : "#3b3022";
+          ctx.fillStyle = "#101c17";
+          ctx.fillRect(x - r + 1, y + 3, 5, 3);
+          ctx.fillRect(x - 4, y + 7, 9, 3);
+          ctx.fillRect(x + r - 6, y + 3, 5, 3);
+          ctx.fillStyle = "#1b281d";
+          ctx.fillRect(x - 3, y - 1, 7, 13);
+          ctx.fillStyle = trunkColor;
+          ctx.fillRect(x - 2, y - 2, 4, 11);
+          ctx.fillStyle = "#735538";
+          ctx.fillRect(x - 1, y, 2, 7);
+          ctx.fillStyle = "#55432b";
+          ctx.fillRect(x - 8, y + 6, 7, 2);
+          ctx.fillRect(x + 2, y + 4, 8, 2);
+          ctx.fillRect(x - 5, y + 9, 4, 2);
+
+          const base = palette[tree.shade];
+          const mid = palette[tree.shade + 1];
+          const bright = palette[tree.shade + 2];
+          const glint = palette[tree.shade + 3];
+          ctx.fillStyle = base;
+          ctx.fillRect(x - r - 2, y - r + 1, r * 2 + 4, r + 8);
+          ctx.fillRect(x - r - 6, y - 4, r * 2 + 12, r + 2);
+          ctx.fillRect(x - r + 2, y - r - 4, r * 2 - 4, 6);
+          ctx.fillRect(x - r - 3, y - r + 5, 5, r);
+          ctx.fillRect(x + r - 2, y - r + 4, 5, r - 1);
+          ctx.fillStyle = mid;
+          ctx.fillRect(x - r + 2, y - r + 1, r, 5);
+          ctx.fillRect(x + 1, y - r + 3, r - 1, 5);
+          ctx.fillRect(x - r - 3, y - 1, 6, 4);
+          ctx.fillRect(x + r - 3, y + 1, 5, 4);
+          ctx.fillStyle = bright;
+          ctx.fillRect(x - r + 4, y - r + 2, 4, 3);
+          ctx.fillRect(x + 2, y - r + 5, 4, 3);
+          ctx.fillRect(x - r - 2, y - 2, 4, 3);
+          ctx.fillRect(x + r - 4, y - 4, 4, 3);
+          ctx.fillStyle = glint;
+          ctx.fillRect(x - r + 5, y - r + 3, 2, 1);
+          ctx.fillRect(x + 3, y - r + 6, 2, 1);
+          for (let leaf = 0; leaf < 8; leaf += 1) {
+            const leafX = x - r + 2 + ((tree.variant * 5 + leaf * 7) % (r * 2 - 4));
+            const leafY = y - r + 1 + ((tree.variant * 3 + leaf * 5) % (r + 5));
+            ctx.fillStyle = [mid, bright, glint, base][(leaf + tree.variant) % 4];
+            ctx.fillRect(leafX, leafY, leaf % 3 === 0 ? 3 : 2, 1);
+            if (leaf % 3 === 0) {
+              ctx.fillStyle = leafLight;
+              ctx.fillRect(leafX + 1, leafY - 1, 1, 1);
+            }
+          }
+          ctx.fillStyle = leafLight;
+          if (tree.variant % 3 === 0) ctx.fillRect(x - r + 2, y + 2, 2, 1);
+          if (tree.variant % 4 === 0) ctx.fillRect(x + r - 3, y - 1, 2, 1);
+          if (tree.variant % 5 === 0) {
+            ctx.fillStyle = "#c0c86a";
+            ctx.fillRect(x - 2, y - r + 3, 1, 1);
+          }
+          if (tree.variant % 7 === 0) {
+            ctx.fillStyle = game.time === "past" ? "#a9c588" : "#c5b96a";
+            ctx.fillRect(x + 2, y + 2, 1, 1);
+          }
+        }
+      }
+
+      function drawPlayer() {
+        const x = Math.round(game.x);
+        const y = Math.round(game.y);
+        const step = isMoving ? Math.sin(visualClock / 68) : 0;
+        const footOffset = isMoving ? Math.round(step * 1.5) : 0;
+        const facingUp = facing.y < -0.45;
+        const facingSide = Math.abs(facing.x) > 0.65;
+        const side = facing.x < 0 ? -1 : 1;
+        const lanternX = x + Math.round(facing.x * 5) + (Math.abs(facing.x) < 0.3 ? 5 : 0);
+        const lanternY = y + Math.round(facing.y * 4);
+
+        ctx.fillStyle = "#111a15";
+        ctx.fillRect(x - 7, y + 7, 14, 3);
+        ctx.fillStyle = "#26352a";
+        ctx.fillRect(x - 5, y + 8, 10, 2);
+
+        ctx.fillStyle = "#382e22";
+        ctx.fillRect(x - 5, y + 5 + footOffset, 4, 4);
+        ctx.fillRect(x + 2, y + 5 - footOffset, 4, 4);
+        ctx.fillStyle = "#b58c59";
+        ctx.fillRect(x - 5, y + 5 + footOffset, 3, 2);
+        ctx.fillRect(x + 2, y + 5 - footOffset, 3, 2);
+        ctx.fillStyle = "#d4bd8a";
+        ctx.fillRect(x - 4, y + 4 + footOffset, 2, 1);
+        ctx.fillRect(x + 3, y + 4 - footOffset, 2, 1);
+
+        ctx.fillStyle = "#483b2b";
+        ctx.fillRect(x - 7, y - 4, 4, 11);
+        ctx.fillRect(x + 3, y - 3, 4, 10);
+        ctx.fillStyle = "#80603b";
+        ctx.fillRect(x - 6, y - 3, 3, 8);
+        ctx.fillRect(x + 4, y - 2, 2, 8);
+        ctx.fillStyle = "#c19b62";
+        ctx.fillRect(x - 5, y - 2, 1, 5);
+
+        ctx.fillStyle = "#26382d";
+        ctx.fillRect(x - 6, y - 2, 12, 10);
+        ctx.fillRect(x - 4, y - 4, 8, 13);
+        ctx.fillStyle = "#466044";
+        ctx.fillRect(x - 4, y - 2, 8, 8);
+        ctx.fillRect(x - 3, y + 5, 6, 2);
+        ctx.fillStyle = "#6e8450";
+        ctx.fillRect(x - 3, y - 1, 2, 5);
+        ctx.fillRect(x + 2, y + 1, 1, 4);
+        ctx.fillStyle = "#d1b579";
+        ctx.fillRect(x - 1, y + 1, 2, 6);
+        ctx.fillStyle = "#8e6840";
+        ctx.fillRect(x - 4, y + 4, 2, 3);
+
+        ctx.fillStyle = "#b58c59";
+        ctx.fillRect(x - 5, y - 5, 10, 8);
+        ctx.fillStyle = "#d7bd89";
+        ctx.fillRect(x - 4, y - 7, 8, 8);
+        ctx.fillRect(x - 3, y - 8, 6, 2);
+        ctx.fillStyle = "#64452c";
+        ctx.fillRect(x - 6, y - 8, 12, 4);
+        ctx.fillRect(x - 5, y - 10, 9, 3);
+        ctx.fillStyle = "#a97b48";
+        ctx.fillRect(x - 3, y - 10, 6, 2);
+        ctx.fillRect(x + 2, y - 7, 3, 2);
+
+        if (facingUp) {
+          ctx.fillStyle = "#352d25";
+          ctx.fillRect(x - 4, y - 6, 8, 5);
+          ctx.fillStyle = "#92683b";
+          ctx.fillRect(x - 3, y - 7, 6, 2);
+          ctx.fillStyle = "#d6b775";
+          ctx.fillRect(x - 1, y - 5, 2, 2);
+        } else if (facingSide) {
+          ctx.fillStyle = "#70472c";
+          ctx.fillRect(x + side * 2, y - 4, 3, 3);
+          ctx.fillStyle = "#f0d7a0";
+          ctx.fillRect(x + side * 2, y - 3, 1, 1);
+          ctx.fillStyle = "#513725";
+          ctx.fillRect(x - side * 4, y - 4, 2, 3);
+        } else {
+          ctx.fillStyle = "#503722";
+          ctx.fillRect(x - 4, y - 4, 8, 2);
+          ctx.fillStyle = "#f1d99f";
+          ctx.fillRect(x - 3, y - 3, 2, 2);
+          ctx.fillRect(x + 2, y - 3, 2, 2);
+          ctx.fillStyle = "#4c3827";
+          ctx.fillRect(x - 1, y - 1, 2, 2);
+        }
+
+        ctx.fillStyle = "#8d673c";
+        ctx.fillRect(x - 6, y - 1, 3, 7);
+        ctx.fillRect(x + 4, y - 1, 2, 6);
+        ctx.fillStyle = "#d9bd7e";
+        ctx.fillRect(x - 4, y - 1, 8, 1);
+        ctx.fillStyle = "#dbc27f";
+        ctx.fillRect(x - 2, y + 4, 4, 2);
+
+        ctx.fillStyle = "#4a3825";
+        ctx.fillRect(lanternX - 3, lanternY + 1, 6, 4);
+        ctx.fillStyle = "#c47e3b";
+        ctx.fillRect(lanternX - 2, lanternY - 2, 4, 5);
+        ctx.fillStyle = "#f4cb70";
+        ctx.fillRect(lanternX - 1, lanternY - 2, 2, 4);
+        ctx.fillStyle = "#fff5bd";
+        ctx.fillRect(lanternX - 0.5, lanternY - 1, 1, 2);
+        ctx.fillStyle = "#9d7545";
+        ctx.fillRect(lanternX - 2, lanternY - 4, 4, 2);
+      }
+
+      function drawLighting(camera, time) {
+        const playerX = game.x - camera.x;
+        const playerY = game.y - camera.y;
+        const flicker = Math.sin(time / 83) * 2 + Math.sin(time / 137) * 1.5;
+        const lanternX = playerX + facing.x * 5 + (Math.abs(facing.x) < 0.3 ? 5 : 0);
+        const lanternY = playerY + facing.y * 4;
+        const radius = (isMoving ? 57 : 48) + flicker;
+
+        ctx.save();
+        const ambient = ctx.createRadialGradient(playerX, playerY, 18, playerX, playerY, 205);
+        ambient.addColorStop(0, game.time === "past" ? "rgba(3, 9, 13, 0.04)" : "rgba(5, 9, 6, 0.08)");
+        ambient.addColorStop(0.48, game.time === "past" ? "rgba(4, 10, 13, 0.28)" : "rgba(5, 10, 6, 0.32)");
+        ambient.addColorStop(1, "rgba(3, 7, 6, 0.76)");
+        ctx.fillStyle = ambient;
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        ctx.globalCompositeOperation = "screen";
+        addGlow(lanternX, lanternY, radius, "#ffe5a1", 0.43);
+        addGlow(playerX, playerY + 1, radius * 0.68, game.time === "past" ? "#a5e8d9" : "#b8d99b", 0.25);
+        const artifactScreen = { x: objects.artifact.x - camera.x, y: objects.artifact.y - camera.y };
+        if (game.artifactAwakened) addGlow(artifactScreen.x, artifactScreen.y, 31, "#6de5d6", 0.44);
+        if (game.time === "past" && !game.memoryRead) {
+          addGlow(objects.memory.x - camera.x, objects.memory.y - camera.y, 25, "#a9ead2", 0.34);
+        }
+        if (game.puzzleSolved) addGlow(objects.core.x - camera.x, objects.core.y - camera.y, 40, "#68e4d6", 0.42);
+        for (const torch of [{ x: 635, y: 198 }, { x: 825, y: 198 }]) {
+          const flickerAlpha = 0.26 + (Math.sin(time / 80 + torch.x) + 1) * 0.09;
+          addGlow(torch.x - camera.x, torch.y - camera.y, 30, "#e9a84d", flickerAlpha);
+        }
+        if (game.puzzleIndex > 0 || game.puzzleSolved) {
+          for (let index = 0; index < objects.runes.length; index += 1) {
+            if (index < game.puzzleIndex || game.puzzleSolved) {
+              const rune = objects.runes[index];
+              addGlow(rune.x - camera.x, rune.y - camera.y, 22, "#82e8d2", 0.35);
+            }
+          }
+        }
+        ctx.restore();
+      }
+
+      function addGlow(x, y, radius, color, opacity) {
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        gradient.addColorStop(0, `${color}${Math.round(opacity * 255).toString(16).padStart(2, "0")}`);
+        gradient.addColorStop(0.34, `${color}${Math.round(opacity * 0.48 * 255).toString(16).padStart(2, "0")}`);
+        gradient.addColorStop(1, `${color}00`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+      }
+
+      function drawHud() {
+        ctx.fillStyle = "#101a18";
+        ctx.fillRect(0, 0, WIDTH, 25);
+        ctx.fillStyle = "#e8f0df";
+        ctx.font = "bold 8px ui-monospace, monospace";
+        ctx.fillText("AVELORA  ·  A FLORESTA ESQUECIDA", 6, 10);
+        ctx.font = "7px ui-monospace, monospace";
+        ctx.fillStyle = game.time === "past" ? "#9fe9e3" : "#c6d59a";
+        ctx.fillText(game.time === "past" ? "PASSADO" : "PRESENTE", 6, 20);
+        ctx.fillStyle = "#d8e4d6";
+        const objective = objectiveText();
+        ctx.fillText(objective.slice(0, 37), 93, 20);
+        if (game.puzzleIndex > 0 && !game.puzzleSolved) {
+          ctx.fillStyle = "#f0d68e";
+          ctx.fillText(`${game.puzzleIndex}/3`, 290, 10);
+        }
+      }
+
+      function drawPrompt(text) {
+        ctx.font = "bold 8px ui-monospace, monospace";
+        const width = Math.min(174, ctx.measureText(text).width + 12);
+        ctx.fillStyle = "#101a18eF";
+        ctx.fillRect((WIDTH - width) / 2, 151, width, 17);
+        ctx.fillStyle = "#eff4dc";
+        ctx.textAlign = "center";
+        ctx.fillText(text, WIDTH / 2, 162);
+        ctx.textAlign = "left";
+      }
+
+      function drawDialogue() {
+        ctx.fillStyle = "#101a18f5";
+        ctx.fillRect(5, 124, 310, 51);
+        ctx.strokeStyle = "#9fc6a2";
+        ctx.strokeRect(5.5, 124.5, 309, 50);
+        ctx.fillStyle = "#a7e2bb";
+        ctx.font = "bold 8px ui-monospace, monospace";
+        ctx.fillText(dialogue.title.slice(0, 42), 12, 136);
+        ctx.fillStyle = "#f1f2dc";
+        ctx.font = "7px ui-monospace, monospace";
+        const lines = wrapText(dialogue.lines[dialogue.page], 71);
+        for (let index = 0; index < Math.min(3, lines.length); index += 1) {
+          ctx.fillText(lines[index], 12, 147 + index * 8);
+        }
+        ctx.fillStyle = "#f0d68e";
+        ctx.textAlign = "right";
+        ctx.fillText(dialogue.page + 1 < dialogue.lines.length ? "E  Próximo ▶" : "E  Fechar ▶", 308, 169);
+        ctx.textAlign = "left";
+      }
+
+      function wrapText(text, maxLength) {
+        const words = text.split(/\s+/);
+        const lines = [];
+        let line = "";
+        for (const word of words) {
+          const candidate = line ? `${line} ${word}` : word;
+          if (candidate.length > maxLength && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = candidate;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      function frame(time) {
+        const delta = previousFrame ? Math.min(32, time - previousFrame) : 16;
+        previousFrame = time;
+        visualClock += delta;
+        movePlayer(delta);
+        if (mode === "playing" && !dialogue && time - lastSaveAt > 1500) {
+          saveGame();
+          lastSaveAt = time;
+        }
+        if (notice && time > noticeUntil) {
+          notice = "";
+          if (!status.textContent.startsWith("Não foi possível salvar") && !status.textContent.startsWith("Não foi possível acessar")) {
+            status.textContent = "";
+          }
+        }
+        draw();
+        window.requestAnimationFrame(frame);
+      }
+
+      function canvasPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * WIDTH / rect.width,
+          y: (event.clientY - rect.top) * HEIGHT / rect.height
+        };
+      }
+
+      canvas.addEventListener("pointerdown", event => {
+        if (mode !== "playing" || dialogue) return;
+        const point = canvasPoint(event);
+        const world = cameraPosition();
+        const x = point.x + world.x;
+        const y = point.y + world.y;
+        const target = currentInteraction();
+        if (target && Math.hypot(game.x - x, game.y - y) < 34) interact();
+      });
+
+      document.addEventListener("keydown", event => {
+        const key = event.key.toLowerCase();
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+        if (event.repeat) return;
+        if (mode === "menu" || mode === "ending") {
+          if (key === "enter" || key === " ") {
+            if (mode === "ending") setMode("menu");
+            else startNewGame();
+          }
+          return;
+        }
+        if (key === "escape") {
+          if (dialogue) return;
+          setMode(mode === "paused" ? "playing" : "paused");
+          return;
+        }
+        if (mode === "paused") return;
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
+          keys.add(key);
+          return;
+        }
+        if (key === "e" || key === " ") {
+          interact();
+          return;
+        }
+        if (key === "q") switchTime();
+      });
+
+      document.addEventListener("keyup", event => keys.delete(event.key.toLowerCase()));
+      window.addEventListener("blur", () => keys.clear());
+      document.getElementById("new-game").addEventListener("click", startNewGame);
+      continueButton.addEventListener("click", continueGame);
+      document.getElementById("pause-button").addEventListener("click", () => {
+        if (mode === "playing" && !dialogue) setMode("paused");
+      });
+      document.getElementById("resume-game").addEventListener("click", () => setMode("playing"));
+      document.getElementById("restart-game").addEventListener("click", restartGame);
+      restartButton.addEventListener("click", restartGame);
+      document.getElementById("ending-restart").addEventListener("click", restartGame);
+      document.getElementById("ending-menu").addEventListener("click", () => setMode("menu"));
+
+      try {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) continueButton.hidden = false;
+      } catch (error) {
+        console.error("Falha ao verificar se existe uma partida salva.", error);
+        setStatus("O navegador não permitiu acessar o salvamento local. Ainda é possível iniciar uma nova partida.", 7000);
+      }
+      ctx.imageSmoothingEnabled = false;
+      ctx.scale(2, 2);
+      window.requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

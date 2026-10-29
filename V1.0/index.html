@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="Danilo Pinto">
+  <meta name="theme-color" content="#101b1a">
+  <meta name="description" content="Portal de planejamento do jogo Ecos de Avelora: visão, narrativa, MVP, arquitetura e desenvolvimento.">
+  <title>Ecos de Avelora — Portal do Projeto</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101b1a;
+      --panel: #182725;
+      --panel-soft: #203431;
+      --text: #edf4e9;
+      --muted: #b6c7b8;
+      --accent: #91d8ad;
+      --cyan: #8fe3e1;
+      --gold: #f0cc7b;
+      --line: #38534b;
+      --max: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 50% -20%, #315348 0, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--cyan); }
+    a:hover { color: var(--gold); }
+    a:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+    .skip { position: absolute; top: -5rem; left: 1rem; z-index: 10; padding: .7rem 1rem; background: var(--gold); color: #101b1a; }
+    .skip:focus { top: 1rem; }
+    .topbar {
+      position: sticky; top: 0; z-index: 5;
+      border-bottom: 1px solid #ffffff1b;
+      background: #101b1aeF; backdrop-filter: blur(12px);
+    }
+    .topbar-inner { max-width: var(--max); margin: auto; padding: .75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .brand { color: var(--text); text-decoration: none; font-weight: 800; letter-spacing: .04em; }
+    .topbar nav { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: flex-end; font-size: .88rem; }
+    .topbar nav a { color: var(--muted); text-decoration: none; }
+    .topbar nav a:hover { color: var(--accent); }
+    .hero { max-width: var(--max); margin: auto; padding: 4rem 1.25rem 3rem; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 2rem; align-items: center; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; font-size: .78rem; letter-spacing: .18em; font-weight: 800; }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { margin: .5rem 0 1rem; font-size: clamp(2.6rem, 7vw, 5.2rem); letter-spacing: -.055em; }
+    h2 { font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 1rem; }
+    h3 { color: var(--accent); margin: 1.6rem 0 .5rem; }
+    .lead { max-width: 58ch; color: var(--muted); font-size: 1.12rem; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.5rem 0; }
+    .pill { border: 1px solid var(--line); color: var(--muted); border-radius: 99px; padding: .35rem .75rem; font-size: .85rem; }
+    .hero-art { width: 100%; height: auto; filter: drop-shadow(0 20px 35px #0008); image-rendering: pixelated; }
+    .references { max-width: var(--max); margin: 0 auto 3rem; padding: 0 1.25rem; }
+    .evolution { max-width: var(--max); margin: 0 auto 3rem; padding: 0 1.25rem; }
+    .evolution ol { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: .85rem; }
+    .evolution li { padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: .85rem; }
+    .evolution h3 { margin: 0 0 .35rem; }
+    .evolution p { margin: 0 0 .5rem; color: var(--muted); }
+    .evolution .shot { display: block; width: 100%; height: auto; margin: .5rem 0 .75rem; border: 1px solid var(--line); border-radius: .5rem; image-rendering: pixelated; }
+    .evolution a { color: var(--accent); }
+    .evolution > h3 { margin: 1.5rem 0 0; }
+    .references-intro { max-width: 75ch; color: var(--muted); }
+    .reference-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+    .reference-card { overflow: hidden; margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: .9rem; }
+    .reference-card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: #0c1514; }
+    .reference-card figcaption { padding: .85rem 1rem 1rem; color: var(--muted); font-size: .9rem; }
+    .reference-card figcaption strong { display: block; color: var(--text); margin-bottom: .25rem; }
+    .reference-card figcaption a { font-size: .82rem; }
+    .layout { max-width: var(--max); margin: auto; padding: 0 1.25rem 4rem; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 2.25rem; align-items: start; }
+    aside { position: sticky; top: 5.5rem; }
+    .toc { background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem; }
+    .toc strong { display: block; margin: 0 0 .6rem; color: var(--gold); }
+    .toc a { display: block; padding: .35rem 0; text-decoration: none; color: var(--muted); font-size: .92rem; }
+    .toc a:hover { color: var(--accent); }
+    main { min-width: 0; }
+    section.doc { padding: 2.25rem 0; border-bottom: 1px solid var(--line); }
+    section.doc:first-child { padding-top: .25rem; }
+    .section-label { color: var(--gold); text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; font-weight: 800; }
+    .callout { border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 .7rem .7rem 0; padding: 1rem 1.15rem; color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; margin: 1.2rem 0; }
+    .card { padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: .85rem; }
+    .card h3 { margin-top: 0; }
+    .card p { margin-bottom: 0; color: var(--muted); }
+    ul, ol { padding-left: 1.35rem; }
+    li { margin: .35rem 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .94rem; }
+    th, td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: .7rem .6rem; }
+    th { color: var(--gold); }
+    code { color: var(--cyan); background: #0c1514; border-radius: .25rem; padding: .08rem .3rem; }
+    .phase { border-left: 2px solid var(--line); margin: 1rem 0 1rem .45rem; padding: 0 0 .4rem 1.15rem; }
+    .phase h3 { margin-top: 0; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li::before { content: "□"; color: var(--accent); font-size: 1.2em; margin-right: .65rem; }
+    footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; padding-top: 2.5rem; }
+      .hero-art { max-width: 520px; margin: auto; }
+      .reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; }
+      .toc { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-items: center; }
+      .toc strong { width: 100%; }
+      .toc a { padding: .15rem 0; }
+    }
+    @media (max-width: 520px) {
+      .topbar-inner { align-items: flex-start; flex-direction: column; }
+      .topbar nav { justify-content: flex-start; }
+      .cards { grid-template-columns: 1fr; }
+      .reference-grid { grid-template-columns: 1fr; }
+      table { font-size: .85rem; }
+      th, td { padding: .55rem .35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#inicio">ECOS DE AVELORA</a>
+      <nav aria-label="Navegacao principal">
+        <a href="#visao">Visão</a><a href="#processo">Processo</a><a href="#agentes">Agentes</a><a href="#evolucao">Evolução V1</a><a href="#evolucao-v2">Evolução V2</a><a href="#imagens">Imagens</a><a href="#narrativa">Narrativa</a><a href="#mvp">MVP</a><a href="#tecnica">Técnica</a><a href="#plano">Plano</a>
+      </nav>
+    </div>
+  </header>
+
+  <header class="hero" id="inicio">
+    <div>
+      <div class="eyebrow">Documento de planejamento · MVP 1.0</div>
+      <h1>Ecos de<br>Avelora</h1>
+      <p class="lead">Uma aventura top-down em Pixel Art sobre ruínas, memórias e uma civilização desaparecida. Explore o presente. Revele o passado. Descubra o que aconteceu.</p>
+      <div class="pill-row"><span class="pill">Aventura 2D</span><span class="pill">Pixel Art</span><span class="pill">Navegador</span><span class="pill">Uma fase no MVP</span></div>
+      <p><a href="jogo.html">▶ Jogar a primeira versão da Fase 1</a> — abre no navegador sem instalar dependências.</p>
+      <p class="callout"><strong>Objetivo atual:</strong> entregar uma fase completa e jogável para validar exploração, alternância temporal, um enigma e a conclusão narrativa. As outras nove fases ficam planejadas, não implementadas, no MVP.</p>
+    </div>
+    <svg class="hero-art" viewBox="0 0 480 300" role="img" aria-labelledby="art-title art-desc" shape-rendering="crispEdges">
+      <title id="art-title">Ruinas antigas na floresta de Avelora</title>
+      <desc id="art-desc">Ilustracao original em blocos de pixel com floresta, templo e cristal azul brilhante.</desc>
+      <rect width="480" height="300" fill="#172824"/>
+      <rect y="204" width="480" height="96" fill="#354d3b"/>
+      <path d="M0 230h70v-24h48v24h54v-40h34v40h73v-28h45v28h60v-45h32v45h64v70H0z" fill="#526346"/>
+      <path d="M0 270h80v-24h38v24h75v-15h55v15h80v-30h45v30h107v30H0z" fill="#283d32"/>
+      <rect x="154" y="98" width="172" height="119" fill="#7c8061"/>
+      <rect x="176" y="117" width="128" height="100" fill="#b4a77a"/>
+      <path d="M160 98h160L300 69H181z" fill="#d2bd82"/>
+      <rect x="194" y="145" width="24" height="72" fill="#31433a"/>
+      <rect x="262" y="145" width="24" height="72" fill="#31433a"/>
+      <rect x="219" y="170" width="42" height="47" fill="#182824"/>
+      <rect x="234" y="129" width="12" height="28" fill="#83e4db"/>
+      <rect x="228" y="137" width="24" height="12" fill="#83e4db"/>
+      <rect x="234" y="133" width="12" height="20" fill="#c9fff0"/>
+      <g fill="#18372d">
+        <rect x="29" y="126" width="54" height="88"/><rect x="14" y="151" width="84" height="44"/>
+        <rect x="54" y="95" width="19" height="39"/><rect x="382" y="116" width="55" height="97"/>
+        <rect x="365" y="145" width="90" height="47"/><rect x="399" y="81" width="22" height="44"/>
+      </g>
+      <g fill="#72905a">
+        <rect x="35" y="135" width="12" height="12"/><rect x="66" y="160" width="12" height="12"/>
+        <rect x="390" y="127" width="12" height="12"/><rect x="420" y="158" width="12" height="12"/>
+      </g>
+      <path d="M0 221h480" stroke="#9fb67a" stroke-width="5"/>
+      <rect x="102" y="236" width="20" height="26" fill="#c29a63"/>
+      <rect x="107" y="224" width="10" height="15" fill="#e5c58b"/>
+      <rect x="108" y="233" width="8" height="8" fill="#7dd9d4"/>
+      <g fill="#96e5dd" opacity=".8"><rect x="128" y="113" width="4" height="4"/><rect x="346" y="94" width="4" height="4"/><rect x="330" y="243" width="4" height="4"/><rect x="139" y="197" width="4" height="4"/></g>
+    </svg>
+  </header>
+
+  <section class="evolution" id="processo" aria-labelledby="process-title">
+    <div class="section-label">Estratégia de desenvolvimento</div>
+    <h2 id="process-title">Documentação técnica e de negócio</h2>
+    <p class="references-intro">O projeto foi construído com agentes de IA no GitHub Copilot, em etapas: primeiro a documentação de produto e de arquitetura (visão, narrativa, escopo do MVP, arquitetura e planos), depois o jogo jogável (V1) e as versões em Phaser (V2.0 a V4.0). Os documentos são numerados e se complementam: o negócio define o escopo, a arquitetura define como construir e os planos definem a ordem e os testes. Cada agente trabalha com um papel definido e valida o que entrega.</p>
+    <p class="references-intro">Os arquivos abaixo são o material de planejamento usado na construção. Cada um pode ser aberto no navegador ou baixado.</p>
+    <ol>
+        <li>
+          <h3>Visão do jogo</h3>
+          <p>Conceito, pilares (exploração, memórias temporais, narrativa ambiental e progressão linear) e identidade visual de Ecos de Avelora.</p>
+          <a href="../docs/01-visao-do-jogo.md">Abrir</a> · <a href="../docs/01-visao-do-jogo.md" download>Baixar (01-visao-do-jogo.md)</a>
+        </li>
+        <li>
+          <h3>Narrativa e fases</h3>
+          <p>Premissa, diretrizes narrativas e o planejamento das dez fases, com a Fase 1 (A Floresta Esquecida) detalhada para o MVP.</p>
+          <a href="../docs/02-narrativa-e-fases.md">Abrir</a> · <a href="../docs/02-narrativa-e-fases.md" download>Baixar (02-narrativa-e-fases.md)</a>
+        </li>
+        <li>
+          <h3>Especificação do MVP</h3>
+          <p>Escopo incluído e excluído, fluxo da fase, mecânicas, controles, interface, critérios de aceite e métrica de qualidade.</p>
+          <a href="../docs/03-especificacao-do-mvp.md">Abrir</a> · <a href="../docs/03-especificacao-do-mvp.md" download>Baixar (03-especificacao-do-mvp.md)</a>
+        </li>
+        <li>
+          <h3>Arquitetura técnica</h3>
+          <p>Stack proposta (Phaser e TypeScript), requisitos de execução, configuração visual, estrutura de diretórios, estados, mecânica temporal, persistência e publicação.</p>
+          <a href="../docs/04-arquitetura-tecnica.md">Abrir</a> · <a href="../docs/04-arquitetura-tecnica.md" download>Baixar (04-arquitetura-tecnica.md)</a>
+        </li>
+        <li>
+          <h3>Plano de desenvolvimento</h3>
+          <p>Estimativa e etapas do MVP em semanas: fundação técnica, arte e exploração, mecânica temporal, enigma e narrativa, polimento e publicação.</p>
+          <a href="../docs/05-plano-de-desenvolvimento.md">Abrir</a> · <a href="../docs/05-plano-de-desenvolvimento.md" download>Baixar (05-plano-de-desenvolvimento.md)</a>
+        </li>
+        <li>
+          <h3>Plano técnico detalhado</h3>
+          <p>Princípios, organização técnica, modelo de estado, implementação por etapas, estratégia de testes, requisitos não funcionais, riscos e critérios de conclusão.</p>
+          <a href="../docs/06-plano-tecnico-de-desenvolvimento.md">Abrir</a> · <a href="../docs/06-plano-tecnico-de-desenvolvimento.md" download>Baixar (06-plano-tecnico-de-desenvolvimento.md)</a>
+        </li>
+    </ol>
+  </section>
+
+  <section class="evolution" id="agentes" aria-labelledby="agents-title">
+    <div class="section-label">Agentes e skills</div>
+    <h2 id="agents-title">Agentes e skills usados no desenvolvimento</h2>
+    <p class="references-intro">Agentes são perfis especializados do Copilot e skills são instruções carregadas sob demanda conforme a natureza da tarefa. Aqui estão os que participaram do desenvolvimento do jogo, com os arquivos originais para abrir ou baixar (cópias em <code>agentes/</code>). A skill <code>agent-customization</code> também inclui a pasta <code>references/</code> ao lado do <code>SKILL.md</code>.</p>
+    <h3>Agentes</h3>
+    <ol>
+        <li>
+          <h3>Game Design &amp; Pixel Art Expert</h3>
+          <p>Agente principal de construção do jogo, criado para este projeto. Une game design, gameplay, Pixel Art, UI/UX, arquitetura, performance, QA e desenvolvimento web. Inspeciona o projeto antes de alterar, preserva o escopo pedido, não presume ferramentas ou APIs e valida cada entrega. Seleciona as skills abaixo conforme a tarefa, sem carregar todas de uma vez.</p>
+          <a href="../agentes/agents/game-design-pixel-art.agent.md">Abrir</a> · <a href="../agentes/agents/game-design-pixel-art.agent.md" download>Baixar (game-design-pixel-art.agent.md)</a>
+        </li>
+        <li>
+          <h3>Tech Lead</h3>
+          <p>Agente de arquitetura e engenharia de software, usado na evolução e manutenção das versões mais recentes. Analisa o código existente, compara opções, implementa mudanças pequenas e focadas e executa testes e builds. Cobre backend, modelagem de dados, AWS e CI/CD, e registra hipóteses e riscos em vez de afirmar o que não foi verificado.</p>
+          <a href="../agentes/agents/tech-lead.agent.md">Abrir</a> · <a href="../agentes/agents/tech-lead.agent.md" download>Baixar (tech-lead.agent.md)</a>
+        </li>
+    </ol>
+    <h3>Skills</h3>
+    <ol>
+        <li>
+          <h3><code>pixel-art</code></h3>
+          <p>Cria e revisa Pixel Art detalhada: pixels artísticos pequenos, texturas orgânicas, rampas de cor, sombras graduais e iluminação atmosférica. Aplicada nos geradores em Python que produzem tiles, vegetação, árvores e personagem da V2 em diante. Exige consistência de paleta e estilo, sem pixels isolados sem intenção.</p>
+          <a href="../agentes/skills/pixel-art/SKILL.md">Abrir</a> · <a href="../agentes/skills/pixel-art/SKILL.md" download>Baixar (pixel-art/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>pixel-perfect</code></h3>
+          <p>Garante a nitidez da imagem: resolução interna, escala inteira, grid de tiles, alinhamento de sprites e câmera, sem suavização e sem emendas entre tiles. Base da resolução 640×360 ampliada 2× com nearest neighbor e da câmera em pixels inteiros.</p>
+          <a href="../agentes/skills/pixel-perfect/SKILL.md">Abrir</a> · <a href="../agentes/skills/pixel-perfect/SKILL.md" download>Baixar (pixel-perfect/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>sprite-animation</code></h3>
+          <p>Trata de animação quadro a quadro, sprite sheets, ciclos de caminhada, tempo de cada quadro e pivôs. Foi usada nas quatro direções do personagem, com 4 quadros cada, e na correção da caminhada lateral para manter os dois olhos visíveis.</p>
+          <a href="../agentes/skills/sprite-animation/SKILL.md">Abrir</a> · <a href="../agentes/skills/sprite-animation/SKILL.md" download>Baixar (sprite-animation/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>level-design</code></h3>
+          <p>Planeja mapas, rotas, ritmo de exploração e legibilidade espacial. Orientou a composição da Fase 1: caminho de pedra, rio com ponte temporal, santuário e posição dos pontos de interação.</p>
+          <a href="../agentes/skills/level-design/SKILL.md">Abrir</a> · <a href="../agentes/skills/level-design/SKILL.md" download>Baixar (level-design/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>gameplay-programming</code></h3>
+          <p>Implementa controles, movimento, colisões, câmera, cenas, salvamento e progressão. Aplicada na cena de exploração em Phaser e TypeScript, no salvamento local, na alternância entre presente e passado e na lógica do enigma Sol, Lua e Ondas.</p>
+          <a href="../agentes/skills/gameplay-programming/SKILL.md">Abrir</a> · <a href="../agentes/skills/gameplay-programming/SKILL.md" download>Baixar (gameplay-programming/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>game-ui-ux</code></h3>
+          <p>Projeta HUD, diálogos, avisos, textos legíveis e feedback visual, com acessibilidade. Aplicada às mensagens de interação, ao painel de diálogo e às telas de início, pausa e final.</p>
+          <a href="../agentes/skills/game-ui-ux/SKILL.md">Abrir</a> · <a href="../agentes/skills/game-ui-ux/SKILL.md" download>Baixar (game-ui-ux/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>asset-pipeline</code></h3>
+          <p>Organiza, gera e valida assets: atlas de sprites, tilesets e metadados. Aplicada nos geradores reprodutíveis em Python com Pillow que escrevem os PNGs e JSONs de cada versão, com semente fixa para o mesmo resultado a cada execução.</p>
+          <a href="../agentes/skills/asset-pipeline/SKILL.md">Abrir</a> · <a href="../agentes/skills/asset-pipeline/SKILL.md" download>Baixar (asset-pipeline/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>web-frontend</code></h3>
+          <p>Cobre HTML, CSS e TypeScript para aplicações de navegador, com layout responsivo e acessível. Aplicada às páginas, ao carregamento do jogo em Phaser com Vite e à documentação publicada neste site.</p>
+          <a href="../agentes/skills/web-frontend/SKILL.md">Abrir</a> · <a href="../agentes/skills/web-frontend/SKILL.md" download>Baixar (web-frontend/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>web-testing-performance</code></h3>
+          <p>Define testes e validações para web: unidade, navegador, acessibilidade e tamanho do bundle. Aplicada ao Vitest, ao build com checagem de tipos e às conferências no navegador, como o teste da porta do templo.</p>
+          <a href="../agentes/skills/web-testing-performance/SKILL.md">Abrir</a> · <a href="../agentes/skills/web-testing-performance/SKILL.md" download>Baixar (web-testing-performance/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>game-testing</code></h3>
+          <p>Planeja testes de jogo, critérios de aceite e prevenção de regressões, incluindo saves forjados para chegar a pontos específicos da progressão. Aplicada na validação de colisões, do enigma e do final.</p>
+          <a href="../agentes/skills/game-testing/SKILL.md">Abrir</a> · <a href="../agentes/skills/game-testing/SKILL.md" download>Baixar (game-testing/SKILL.md)</a>
+        </li>
+        <li>
+          <h3><code>agent-customization</code></h3>
+          <p>Skill de ambiente (não do jogo) para criar e validar arquivos de agente e skills do Copilot, como metadados, descrição e estrutura de pastas. Foi usada para montar o agente Game Design &amp; Pixel Art Expert e suas skills.</p>
+          <a href="../agentes/skills/agent-customization/SKILL.md">Abrir</a> · <a href="../agentes/skills/agent-customization/SKILL.md" download>Baixar (agent-customization/SKILL.md)</a>
+        </li>
+    </ol>
+  </section>
+
+  <section class="evolution" id="evolucao" aria-labelledby="evolution-title">
+    <div class="section-label">Versões 1</div>
+    <h2 id="evolution-title">Evolução da V1 (MVP)</h2>
+    <p class="references-intro">A V1 é o <strong>MVP</strong> do projeto: uma fase completa e jogável, entregue em um único arquivo HTML. A premissa era <strong>rodar direto no navegador, sem nenhuma dependência</strong>: sem instalar Node, npm ou bibliotecas, sem servidor, sem build e sem chamadas a serviços externos. Basta abrir o <code>jogo.html</code> da versão desejada.</p>
+    <p class="references-intro"><strong>Tecnologias utilizadas:</strong> HTML5 (Canvas), CSS3, JavaScript puro, Canvas 2D API e <code>localStorage</code>.</p>
+    <p class="references-intro">Resumo do que mudou em cada versão jogável da Fase 1, conforme o código de cada pasta. A V1.1, a V1.2 e a V1.3 mantêm as regras, a história e o enigma da V1.0; a evolução é visual e de renderização.</p>
+    <ol>
+      <li>
+        <h3>V1.0 · Base jogável</h3>
+        <img class="shot" src="../assets/images/versoes/v1.0.png" alt="Captura da V1.0: campo verde chapado com árvores simples, trilha reta de terra e o personagem em pixels grandes" loading="lazy" decoding="async" width="999" height="564">
+        <p>Primeira versão da Fase 1: exploração top-down, alternância entre presente e passado, enigma Sol, Lua e Ondas e final. Canvas lógico de 320×180 px, sem suavização.</p>
+        <a href="jogo.html">▶ Jogar a V1.0</a>
+      </li>
+      <li>
+        <h3>V1.1 · Iluminação e vegetação</h3>
+        <img class="shot" src="../assets/images/versoes/v1.1.png" alt="Captura da V1.1: cenário escuro com luz da lanterna, grama e musgo detalhados e árvores em camadas" loading="lazy" decoding="async" width="999" height="564">
+        <p>Adiciona iluminação com brilhos de tochas e pontos de luz, detalhes de chão (grama, musgo, flores), árvores desenhadas com camadas e um caminho de pedra em múltiplas faixas.</p>
+        <a href="../V1.1/jogo.html">▶ Jogar a V1.1</a>
+      </li>
+      <li>
+        <h3>V1.2 · Nitidez e ruínas</h3>
+        <img class="shot" src="../assets/images/versoes/v1.2.png" alt="Captura da V1.2: cenário mais nítido com pedras na trilha, arbustos, cristais e árvores detalhadas" loading="lazy" decoding="async" width="999" height="564">
+        <p>Canvas de 640×360 px (2×) para um traço mais nítido, novos aglomerados de cristais, fragmentos de ruínas e ordenação de profundidade do personagem em relação ao cenário.</p>
+        <a href="../V1.2/jogo.html">▶ Jogar a V1.2</a>
+      </li>
+      <li>
+        <h3>V1.3 · Pedra e arquitetura</h3>
+        <img class="shot" src="../assets/images/versoes/v1.3.png" alt="Captura da V1.3: cenário denso com vegetação, rochas, trilha com lajes de pedra e iluminação da lanterna" loading="lazy" decoding="async" width="999" height="564">
+        <p>Canvas de 960×540 px (3×) e cenário mais detalhado: aglomerados de rochas, arco na trilha, portal do santuário e entalhes em pedra, com variações para presente e passado.</p>
+        <a href="../V1.3/jogo.html">▶ Jogar a V1.3</a>
+      </li>
+    </ol>
+  </section>
+
+  <section class="evolution" id="evolucao-v2" aria-labelledby="evolution-v2-title">
+    <div class="section-label">Versões 2</div>
+    <h2 id="evolution-v2-title">Evolução da V2</h2>
+    <p class="references-intro">A V2 refaz a Fase 1 da V1 com engine e ferramentas modernas, mantendo a história e o enigma Sol, Lua e Ondas. O objetivo era ganhar resolução, iluminação e detalhe de Pixel Art. Ao contrário da V1, ela tem dependências de desenvolvimento (Node.js e npm), mas o resultado final (<code>dist/</code>) é estático e roda em qualquer hospedagem. Os jogos precisam ser servidos por HTTP: abrir o arquivo direto do disco não funciona.</p>
+    <p class="references-intro"><strong>Tecnologias utilizadas:</strong> Phaser 3, TypeScript, Vite, Vitest, mapa em JSON (formato Tiled), Python com Pillow (geração da arte) e <code>localStorage</code>.</p>
+    <p class="references-intro">Resumo do que mudou em cada versão da V2, conforme o código de cada pasta.</p>
+    <ol>
+      <li>
+        <h3>V2.0 · Reconstrução do jogo</h3>
+        <img class="shot" src="../assets/images/versoes/v2.0.png" alt="Captura da V2.0: floresta escura iluminada pela lanterna, com árvores de tronco reto e copas arredondadas" loading="lazy" decoding="async" width="1042" height="585">
+        <p>Reconstrução em Phaser, TypeScript e Vite com resolução interna de 640×360 (ampliada 2× sem suavização), mapa de tiles de 32 px, escuridão com luz de lanterna e tochas, personagem em 4 direções e arte detalhada gerada por scripts Python.</p>
+        <a href="http://localhost:5200/">▶ Jogar a V2.0</a>
+      </li>
+      <li>
+        <h3>V2.1 · Árvores orgânicas</h3>
+        <img class="shot" src="../assets/images/versoes/v2.1.png" alt="Captura da V2.1: mesma área da floresta com árvores de troncos curvos, galhos e copas em lóbulos" loading="lazy" decoding="async" width="1042" height="585">
+        <p>Árvores mais naturais: troncos curvos com raízes e galhos visíveis e copas de lóbulos assimétricos. Contorno colorido no lugar do preto e menos dithering, seguindo a análise completa de Pixel Art. Um cristal que ficava dentro do rio foi reposicionado.</p>
+        <a href="http://localhost:5201/">▶ Jogar a V2.1</a>
+      </li>
+      <li>
+        <h3>V2.2 · Correção da porta do templo</h3>
+        <img class="shot" src="../assets/images/versoes/v2.2.png" alt="Captura da V2.2: santuário com as três runas acesas e a passagem aberta até a câmara" loading="lazy" decoding="async" width="1042" height="585">
+        <p>Corrige a porta do templo, que não deixava o jogador chegar ao núcleo depois de ativar Sol, Lua e Ondas. A colisão dos pedestais das runas ficou mais estreita e abriu a passagem. Testado do último símbolo ao final.</p>
+        <a href="http://localhost:5202/">▶ Jogar a V2.2</a>
+      </li>
+    </ol>
+  </section>
+
+  <section class="references" id="imagens" aria-labelledby="references-title">
+    <div class="section-label">Referências visuais do link</div>
+    <h2 id="references-title">Imagens para inspirar Avelora</h2>
+    <p class="references-intro">Estas imagens foram incluídas a partir da conversa compartilhada como referências visuais para exploração, ruínas, enigmas e cenários em Pixel Art. São referências de terceiros, não assets originais do jogo. Os arquivos estão salvos localmente; os créditos levam às fontes indicadas na conversa.</p>
+    <div class="reference-grid">
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-enigma-santuario.jpg" alt="Cena de jogo em pixel art com personagens diante de um enigma de cristais coloridos em um santuário" loading="lazy" decoding="async">
+        <figcaption><strong>Enigma no santuário</strong>Referência para o mecanismo dos símbolos e o uso de cristais.<br><a href="https://wall.alphacoders.com/big.php?i=1329594" target="_blank" rel="noopener noreferrer">Fonte indicada: Alpha Coders</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-ruinas-temporais.jpg" alt="Ruína escura com inscrições cianas e uma figura exploradora, em estilo pixel art" loading="lazy" decoding="async">
+        <figcaption><strong>Ruínas e inscrições</strong>Referência para pistas luminosas e espaços antigos.<br><a href="https://truepastelpink.itch.io/stranded-with-you" target="_blank" rel="noopener noreferrer">Fonte indicada: itch.io</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-cristal-floresta.jpg" alt="Floresta vista de cima com um artefato brilhante no centro e partículas de luz" loading="lazy" decoding="async">
+        <figcaption><strong>Artefato na floresta</strong>Referência para integrar o cristal ao ambiente natural.<br><a href="https://dl.3dmgame.com/pc/147532.html" target="_blank" rel="noopener noreferrer">Fonte indicada: 3DMGAME</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-templo-floresta.jpg" alt="Templo antigo e caminhos de pedra cercados por vegetação em pixel art" loading="lazy" decoding="async">
+        <figcaption><strong>Templo tomado pela vegetação</strong>Referência para a leitura top-down das ruínas na floresta.<br><a href="https://br.pinterest.com/pin/1548181186028431/" target="_blank" rel="noopener noreferrer">Fonte indicada: Pinterest</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-exploracao.jpg" alt="Personagem explorando um caminho de pedra entre ruínas e vegetação, com uma fogueira" loading="lazy" decoding="async">
+        <figcaption><strong>Exploração e ambientação</strong>Referência para caminhos, escala do personagem e iluminação.<br><a href="https://tesana.ai/blog" target="_blank" rel="noopener noreferrer">Fonte indicada: Tesana</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-santuario-pixel-art.jpg" alt="Santuário em pixel art cercado por árvores e folhagem colorida" loading="lazy" decoding="async">
+        <figcaption><strong>Santuário entre árvores</strong>Referência de paleta e composição de uma área de ruínas.<br><a href="https://www.pinterest.com/pin/369506344411023126/" target="_blank" rel="noopener noreferrer">Fonte indicada: Pinterest</a></figcaption>
+      </figure>
+      <figure class="reference-card">
+        <img src="../assets/images/referencia-aventura-2d.jpg" alt="Cena de aventura 2D top-down com personagens em uma câmara de pedra iluminada" loading="lazy" decoding="async">
+        <figcaption><strong>Aventura top-down</strong>Referência geral para personagens, escala e salas de exploração.<br><a href="https://www.igdb.com/games/airoheart" target="_blank" rel="noopener noreferrer">Fonte indicada: IGDB</a></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside>
+      <nav class="toc" aria-label="Índice do documento">
+        <strong>Navegar pelo projeto</strong>
+        <a href="#visao">01 · Visão do jogo</a>
+        <a href="#processo">Documentação e processo</a>
+        <a href="#agentes">Agentes e skills</a>
+        <a href="#evolucao">Evolução da V1</a>
+        <a href="#evolucao-v2">Evolução da V2</a>
+        <a href="#imagens">Referências visuais</a>
+        <a href="#narrativa">02 · Narrativa e fases</a>
+        <a href="#mvp">03 · Especificação do MVP</a>
+        <a href="#tecnica">04 · Arquitetura técnica</a>
+        <a href="#plano">05 · Plano de desenvolvimento</a>
+        <a href="#status">Status e premissas</a>
+      </nav>
+    </aside>
+
+    <main id="conteudo">
+      <section class="doc" id="visao">
+        <div class="section-label">Documento 01</div>
+        <h2>Visão do jogo</h2>
+        <p><strong>Ecos de Avelora</strong> é um jogo de aventura 2D em Pixel Art no qual o jogador explora uma ilha de ruínas antigas e usa memórias do passado para compreender o presente. A experiência combina exploração, interação com objetos, enigmas ambientais e narrativa linear.</p>
+        <div class="cards">
+          <article class="card"><h3>Exploração</h3><p>Descobrir caminhos, ruínas, inscrições e objetos que ampliam a compreensão do mundo.</p></article>
+          <article class="card"><h3>Memórias temporais</h3><p>Um artefato revela estados antigos e oferece pistas para investigar o presente.</p></article>
+          <article class="card"><h3>Narrativa ambiental</h3><p>Cenários, artefatos, inscrições e cenas curtas contam a história sem depender apenas de diálogos longos.</p></article>
+          <article class="card"><h3>Progressão linear</h3><p>A história principal segue uma ordem fixa; descobertas opcionais não alteram sua sequência.</p></article>
+        </div>
+        <h3>Direção visual e plataforma</h3>
+        <ul>
+          <li>Perspectiva top-down e Pixel Art com aparencia de aventura classica.</li>
+          <li>Resolução-base proposta de 320 × 180 pixels, ampliada sem suavização.</li>
+          <li>Presente em verdes, marrons e cinzas; passado em azuis, cianos e tons claros.</li>
+          <li>Navegadores modernos para desktop, sem exigir instalacao.</li>
+        </ul>
+        <p class="callout">A resolução é uma decisão inicial de produção, não uma limitação obrigatória do motor.</p>
+        <h3>Escopo do produto</h3>
+        <p><strong>MVP:</strong> uma floresta explorável, uma ruína, um artefato temporal, um enigma e uma conclusão narrativa. <strong>Jogo completo planejado:</strong> dez fases lineares, novas regiões e a revelação da origem do Silêncio. O conteúdo futuro não deve atrasar o MVP.</p>
+        <h3>Principios de design</h3>
+        <ol><li>Ensinar mecanicas pela interacao.</li><li>Oferecer pistas suficientes para resolver enigmas.</li><li>Evitar acoes que prendam o jogador permanentemente.</li><li>Manter a mecanica temporal consistente.</li><li>Manter conteudo opcional fora dos bloqueios de conclusao.</li></ol>
+      </section>
+
+      <section class="doc" id="narrativa">
+        <div class="section-label">Documento 02</div>
+        <h2>Narrativa e fases</h2>
+        <p>Há séculos, Avelora utilizava cristais para armazenar e reproduzir memórias. Um evento conhecido como <strong>O Silêncio</strong> apagou grande parte dessas lembranças e deixou cidades em ruínas. O protagonista chega a uma ilha após detectar um sinal e encontra um artefato capaz de revelar fragmentos do passado. As memórias sugerem que o desaparecimento não foi um acidente natural.</p>
+        <h3>Roteiro planejado</h3>
+        <div class="phase"><h3>1 — A Floresta Esquecida</h3><p>O protagonista segue o sinal, desperta o artefato, aprende a revelar ecos e resolve um enigma. A memoria final aponta para outro santuario. <strong>Unica fase do MVP.</strong></p></div>
+        <div class="phase"><h3>2 — O Santuario Partido</h3><p>Investigar outros cristais e compreender como os artefatos se relacionam.</p></div>
+        <div class="phase"><h3>3 — A Vila Silenciosa</h3><p>Conhecer o cotidiano dos ultimos habitantes por meio dos ecos.</p></div>
+        <div class="phase"><h3>4 — As Cavernas de Vidro</h3><p>Descobrir as instalacoes de extracao e armazenamento dos cristais.</p></div>
+        <div class="phase"><h3>5 — A Biblioteca Afundada</h3><p>Encontrar registros que sugerem um experimento proibido.</p></div>
+        <div class="phase"><h3>6 — A Cidade Suspensa</h3><p>Reunir evidencias de que o experimento afetou regioes inteiras.</p></div>
+        <div class="phase"><h3>7 — O Templo das Vozes</h3><p>Encontrar memorias contraditorias e uma tentativa de impedir a catastrofe.</p></div>
+        <div class="phase"><h3>8 — O Nucleo de Avelora</h3><p>Alcancar a origem do fenomeno conhecido como O Silencio.</p></div>
+        <div class="phase"><h3>9 — O Ultimo Registro</h3><p>Revelar a verdade por meio da sequencia completa de memorias.</p></div>
+        <div class="phase"><h3>10 — O Eco Final</h3><p>Confrontar a origem do fenomeno e encerrar a historia.</p></div>
+        <h3>Arco da fase 1</h3>
+        <ol><li>Chegada à floresta seguindo o sinal misterioso.</li><li>Descoberta de inscrição e cristal que reage ao protagonista.</li><li>Aprendizado: uma ponte destruída no presente aparece intacta no passado.</li><li>Enigma de três símbolos, resolvido com uma memória.</li><li>Ativação do artefato, visão de uma cidade destruída e indicação do próximo santuário.</li></ol>
+        <h3>Continuidades a preservar</h3>
+        <p>Manter nomes consistentes, respeitar informações já estabelecidas, não revelar a causa definitiva do Silêncio na fase 1 e preservar a ordem dos acontecimentos. Ainda precisam ser definidas a história do protagonista, a origem do artefato, a identidade ligada ao experimento e o desfecho final.</p>
+      </section>
+
+      <section class="doc" id="mvp">
+        <div class="section-label">Documento 03</div>
+        <h2>Especificação do MVP</h2>
+        <p>Entregar uma fase executável no navegador e concluível do início ao fim, validando a integração de movimentação, exploração, alternância temporal, enigma e narrativa.</p>
+        <h3>Escopo</h3>
+        <div class="cards">
+          <article class="card"><h3>Incluído</h3><p>Menu simples, uma fase, personagem controlável, colisões, câmera, interações, diálogos curtos, alternância temporal, enigma, câmara final, salvamento local, pausa/reinício e efeitos básicos.</p></article>
+          <article class="card"><h3>Fora do MVP</h3><p>Fases 2–10, combate, chefes, inventário complexo, habilidades, missões secundárias, múltiplos finais, multiplayer, contas, backend e salvamento em nuvem.</p></article>
+        </div>
+        <p><strong>Duração estimada:</strong> 10 a 15 minutos na primeira partida, a validar em testes reais.</p>
+        <h3>Mecânica temporal</h3>
+        <table><thead><tr><th>Estado</th><th>Elementos</th></tr></thead><tbody><tr><td>Presente</td><td>Vegetacao crescida, ruinas danificadas e caminhos bloqueados.</td></tr><tr><td>Passado</td><td>Estruturas preservadas, inscricoes e pistas para o enigma.</td></tr></tbody></table>
+        <p>Preservar a posição lógica do jogador e validar a posição no estado de destino antes de concluir a mudança. Uma tentativa inválida não pode prender o jogador nem permitir atravessar paredes.</p>
+        <h3>Enigma, progressão e controles</h3>
+        <ul><li>Três símbolos devem ser ativados na ordem indicada por uma memória.</li><li>Uma tentativa errada apresenta feedback claro; a sequência pode ser reiniciada.</li><li>A progressão acompanha inscrição, artefato, memória, enigma e câmara final.</li><li>W/A/S/D ou setas: mover; E ou Espaço: interagir/avançar; Q: alternar; Esc: pausar.</li></ul>
+        <h3>Criterios de aceite</h3>
+        <ol><li>Abre em navegador suportado; movimento, colisoes, limites e camera funcionam.</li><li>Pixel Art, interacoes e dialogos sao legiveis e consistentes.</li><li>A alternancia muda o cenario e mantem posicao valida.</li><li>O enigma e solucionavel por suas pistas; erro nao bloqueia.</li><li>A camara abre, a narrativa termina e o progresso pode ser salvo/restaurado.</li><li>A fase pode ser reiniciada e concluida sem erros impeditivos.</li></ol>
+        <h3>Validação proposta</h3>
+        <p>Usar taxa de conclusão como métrica principal. Meta inicial: pelo menos 80% de um pequeno grupo de teste conclui sem ajuda. É uma meta ainda não medida, não um resultado garantido.</p>
+      </section>
+
+      <section class="doc" id="tecnica">
+        <div class="section-label">Documento 04</div>
+        <h2>Arquitetura técnica</h2>
+        <h3>Stack proposta</h3>
+        <table><thead><tr><th>Tecnologia</th><th>Responsabilidade prevista</th></tr></thead><tbody>
+          <tr><td>Phaser</td><td>Renderizacao 2D, cenas, entrada, animacoes e camera.</td></tr>
+          <tr><td>TypeScript</td><td>Logica, entidades, estados, enigmas e salvamento.</td></tr>
+          <tr><td>Vite</td><td>Desenvolvimento local e build de producao.</td></tr>
+          <tr><td>Tiled</td><td>Edicao de mapas e objetos interativos.</td></tr>
+          <tr><td>Aseprite ou equivalente</td><td>Sprites, tilesets e animacoes em Pixel Art.</td></tr>
+        </tbody></table>
+        <p>A stack é uma proposta inicial, ainda não implementada. O alvo é HTML5 Canvas, sem servidor obrigatório, com assets locais, <code>localStorage</code> e publicação estática.</p>
+        <h3>Modulos sugeridos</h3>
+        <ul><li><strong>Cenas:</strong> Boot, Menu, Exploration e Ending.</li><li><strong>Entidade:</strong> Player, incluindo movimento, animacao e colisoes.</li><li><strong>Sistemas:</strong> Interaction, Dialogue, Memory, Puzzle e Save.</li><li><strong>Dados:</strong> historia, eventos, mapas e metadados separados da apresentacao.</li></ul>
+        <h3>Estados independentes</h3>
+        <p>Controlar separadamente estado da aplicação (menu, jogando, pausado, concluído), estado temporal (presente/passado), etapas da missão, estado do enigma e estado do salvamento. Isso evita que alternar o tempo reinicie diálogos ou conclua o enigma indevidamente.</p>
+        <h3>Persistencia e expansao</h3>
+        <p>Salvar versao do formato, fase atual, etapas principais, estado do enigma e ultimo ponto seguro. Validar os dados e oferecer reinicio se forem invalidos; armazenamento local nao e backup garantido. Reutilizar sistemas entre fases e manter a progressao em ordem, sem criar carregamento dinamico complexo antes de ser necessario.</p>
+      </section>
+
+      <section class="doc" id="plano">
+        <div class="section-label">Documento 05</div>
+        <h2>Plano de desenvolvimento</h2>
+        <p><strong>Estimativa inicial:</strong> 4 a 6 semanas para uma pessoa com conhecimentos básicos a intermediários. O prazo depende de experiência, assets, enigmas e disponibilidade; não é garantia.</p>
+        <table><thead><tr><th>Periodo</th><th>Foco</th><th>Entrega prevista</th></tr></thead><tbody>
+          <tr><td>Semana 1</td><td>Fundacao: Phaser, TypeScript, Vite, canvas, movimento, colisoes e camera.</td><td>Personagem controlavel em mapa simples.</td></tr>
+          <tr><td>Semana 2</td><td>Paleta, tileset, mapa, objetos e animacoes basicas.</td><td>Fase exploravel, com arte inicial.</td></tr>
+          <tr><td>Semana 3</td><td>Estados temporais, transicao, colisoes e pistas.</td><td>Mecanica temporal segura.</td></tr>
+          <tr><td>Semana 4</td><td>Dialogos, inscricao, enigma e encerramento.</td><td>Primeira versao jogavel de ponta a ponta.</td></tr>
+          <tr><td>Semanas 5–6</td><td>Testes, correcoes, salvamento, navegadores e publicacao.</td><td>MVP Web validado.</td></tr>
+        </tbody></table>
+        <h3>Prioridades</h3>
+        <ul><li><strong>P0:</strong> inicializacao, movimento, mapa, interacoes, alternancia, enigma, progressao e cena final.</li><li><strong>P1:</strong> salvamento, menu, pausa/reinicio, objetivos e tratamento de erros.</li><li><strong>P2:</strong> musica, efeitos, animacoes decorativas e segredos opcionais.</li></ul>
+        <h3>Checklist de aceite</h3>
+        <ul class="checklist"><li>Abre em navegador suportado; movimento, colisoes e camera funcionam.</li><li>Inscricao, artefato e dialogos funcionam.</li><li>Alternancia mantem posicao valida e revela pistas.</li><li>Enigma tem pistas suficientes; tentativa incorreta nao bloqueia.</li><li>Camara e cena final sao alcancaveis.</li><li>Salvamento, restauracao e reinicio funcionam.</li><li>Build publicado foi testado, sem bloqueios conhecidos.</li></ul>
+        <h3>Riscos e mitigacoes</h3>
+        <ul><li>Escopo excessivo: priorizar P0; manter outras fases como planejamento.</li><li>Alternancia confusa: sinais visuais e pistas consistentes.</li><li>Bloqueios: testar posicoes invalidas e permitir reinicio.</li><li>Arte demorada: usar placeholders e substituir gradualmente.</li><li>Salvamento inconsistente: versionar e validar os dados.</li></ul>
+        <p><strong>Próxima etapa:</strong> coletar feedback, corrigir usabilidade, ajustar o enigma, revisar o roteiro e planejar a fase 2 sem duplicar a lógica principal.</p>
+        <p><a href="../docs/06-plano-tecnico-de-desenvolvimento.md">Abrir o plano técnico detalhado de implementação, testes e publicação (Markdown)</a>.</p>
+      </section>
+
+      <section class="doc" id="status">
+        <div class="section-label">Premissas e status</div>
+        <h2>Planejamento, não implementação</h2>
+        <p>Este portal registra a proposta para orientar o desenvolvimento. Stack, duração, cronograma e meta de validação são hipóteses iniciais sujeitas a revisão. O projeto está em planejamento; não há implementação ou resultados de teste declarados.</p>
+        <p>Os documentos Markdown detalham cada área e devem ser atualizados quando escopo, narrativa ou requisitos mudarem.</p>
+      </section>
+    </main>
+  </div>
+  <footer>
+    Ecos de Avelora · Planejamento do MVP 1.0<br>
+    Ilustração SVG original e referências locais. As imagens da galeria pertencem às respectivas fontes.
+  <br>
+    Autor: Danilo Pinto · <a href="mailto:danilo.pinto1@gmail.com">danilo.pinto1@gmail.com</a> · <a href="https://github.com/danilopinto/" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </footer>
+</body>
+</html>
