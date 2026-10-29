@@ -6,7 +6,7 @@
   <meta name="author" content="Danilo Pinto">
   <meta name="theme-color" content="#101b1a">
   <meta name="description" content="Portal de planejamento do jogo Ecos de Avelora: visão, narrativa, MVP, arquitetura e desenvolvimento.">
-  <title>Ecos de Avelora — Portal do Projeto</title>
+  <title>Diário de Desenvolvimento — Ecos de Avelora</title>
   <style>
     :root {
       color-scheme: dark;
@@ -55,11 +55,25 @@
     .lead { max-width: 58ch; color: var(--muted); font-size: 1.12rem; }
     .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.5rem 0; }
     .pill { border: 1px solid var(--line); color: var(--muted); border-radius: 99px; padding: .35rem .75rem; font-size: .85rem; }
-    .hero-art { width: 100%; height: auto; filter: drop-shadow(0 20px 35px #0008); image-rendering: pixelated; }
+    .hero-art { width: min(100%, 360px); height: auto; justify-self: end; filter: drop-shadow(0 20px 35px #0008); image-rendering: pixelated; }
+    .quick-links { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
+    .quick-links a { display: inline-block; padding: .55rem .85rem; border: 1px solid var(--line); border-radius: .65rem; color: var(--accent); text-decoration: none; font-weight: 700; }
+    .quick-links a:first-child { color: #101b1a; background: var(--accent); border-color: var(--accent); }
+    .quick-links a:hover { border-color: var(--gold); color: var(--gold); }
+    .quick-links a:first-child:hover { color: #101b1a; background: var(--gold); }
+    .secondary-links { margin: .75rem 0 0; font-size: .9rem; }
     .references { max-width: var(--max); margin: 0 auto 3rem; padding: 0 1.25rem; }
     .evolution { max-width: var(--max); margin: 0 auto 3rem; padding: 0 1.25rem; }
     .evolution ol { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: .85rem; }
     .evolution li { padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: .85rem; }
+    .journal { display: grid; gap: 1rem; margin: 1.5rem 0 2.5rem; }
+    .journal article { padding: clamp(1.1rem, 3vw, 1.75rem); background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: .85rem; }
+    .journal article:nth-child(even) { border-left-color: var(--cyan); }
+    .journal h3 { margin: .25rem 0 .75rem; }
+    .journal .entry-label { color: var(--gold); text-transform: uppercase; letter-spacing: .1em; font-size: .73rem; font-weight: 800; }
+    .journal p { max-width: 78ch; color: var(--muted); }
+    .journal p:last-child { margin-bottom: 0; }
+    .journal strong { color: var(--text); }
     .evolution h3 { margin: 0 0 .35rem; }
     .evolution p { margin: 0 0 .5rem; color: var(--muted); }
     .evolution .shot { display: block; width: 100%; height: auto; margin: .5rem 0 .75rem; border: 1px solid var(--line); border-radius: .5rem; image-rendering: pixelated; }
@@ -100,7 +114,7 @@
     footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: .9rem; }
     @media (max-width: 800px) {
       .hero { grid-template-columns: 1fr; padding-top: 2.5rem; }
-      .hero-art { max-width: 520px; margin: auto; }
+      .hero-art { max-width: 300px; margin: auto; }
       .reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .layout { grid-template-columns: 1fr; }
       aside { position: static; }
@@ -120,24 +134,29 @@
   </style>
 </head>
 <body>
-  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <a class="skip" href="#evolucao">Pular para os jogos</a>
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="#inicio">ECOS DE AVELORA</a>
       <nav aria-label="Navegacao principal">
-        <a href="#visao">Visão</a><a href="#processo">Processo</a><a href="#agentes">Agentes</a><a href="#evolucao">Evolução V1</a><a href="#evolucao-v2">Evolução V2</a><a href="#imagens">Imagens</a><a href="#narrativa">Narrativa</a><a href="#mvp">MVP</a><a href="#tecnica">Técnica</a><a href="#plano">Plano</a>
+        <a href="#objetivos">Sobre este diário</a><a href="#processo">Capítulos</a><a href="#docs-processo">Documentos</a><a href="#agentes">IA e skills</a><a href="#evolucao">Versões V1</a><a href="#evolucao-v2">Versões V2</a>
       </nav>
     </div>
   </header>
 
   <header class="hero" id="inicio">
     <div>
-      <div class="eyebrow">Documento de planejamento · MVP 1.0</div>
-      <h1>Ecos de<br>Avelora</h1>
-      <p class="lead">Uma aventura top-down em Pixel Art sobre ruínas, memórias e uma civilização desaparecida. Explore o presente. Revele o passado. Descubra o que aconteceu.</p>
-      <div class="pill-row"><span class="pill">Aventura 2D</span><span class="pill">Pixel Art</span><span class="pill">Navegador</span><span class="pill">Uma fase no MVP</span></div>
-      <p><a href="jogo.html">▶ Jogar a primeira versão da Fase 1</a> — abre no navegador sem instalar dependências.</p>
-      <p class="callout"><strong>Objetivo atual:</strong> entregar uma fase completa e jogável para validar exploração, alternância temporal, um enigma e a conclusão narrativa. As outras nove fases ficam planejadas, não implementadas, no MVP.</p>
+      <div class="eyebrow">Diário de desenvolvimento · decisões, experimentos e entregas</div>
+      <h1>Como Ecos de<br>Avelora foi desenvolvido</h1>
+      <p class="lead">Um relato cronológico de como uma ideia se tornou uma proposta de jogo, foi planejada em documentos, desenvolvida com apoio de agentes de IA e skills especializadas, e evoluiu por protótipos, revisões e validações.</p>
+      <div class="pill-row"><span class="pill">Concepção</span><span class="pill">IA aplicada ao desenvolvimento</span><span class="pill">Planejamento</span><span class="pill">Implementação e validação</span></div>
+      <p class="callout"><strong>Objetivo desta página:</strong> explicar o processo e as decisões por trás do projeto, mostrar como a colaboração entre pessoa e IA foi organizada e apontar os artefatos que permitem acompanhar cada etapa. O jogo e sua narrativa são exemplos concretos desse percurso, não o assunto principal.</p>
+      <nav class="quick-links" aria-label="Acesso rápido">
+        <a href="#processo">Acompanhar o processo</a>
+        <a href="#docs-processo">Consultar documentos</a>
+        <a href="#agentes">Conhecer agentes e skills</a>
+      </nav>
+      <p class="secondary-links"><a href="#evolucao">Ver versões V1</a> · <a href="#evolucao-v2">Ver versões V2</a></p>
     </div>
     <svg class="hero-art" viewBox="0 0 480 300" role="img" aria-labelledby="art-title art-desc" shape-rendering="crispEdges">
       <title id="art-title">Ruinas antigas na floresta de Avelora</title>
@@ -172,10 +191,56 @@
     </svg>
   </header>
 
-  <section class="evolution" id="processo" aria-labelledby="process-title">
+  <section class="evolution" id="processo" aria-labelledby="objetivos">
     <div class="section-label">Estratégia de desenvolvimento</div>
-    <h2 id="process-title">Documentação técnica e de negócio</h2>
-    <p class="references-intro">O projeto foi construído com agentes de IA no GitHub Copilot, em etapas: primeiro a documentação de produto e de arquitetura (visão, narrativa, escopo do MVP, arquitetura e planos), depois o jogo jogável (V1) e as versões em Phaser (V2.0 a V4.0). Os documentos são numerados e se complementam: o negócio define o escopo, a arquitetura define como construir e os planos definem a ordem e os testes. Cada agente trabalha com um papel definido e valida o que entrega.</p>
+    <h2 id="objetivos">Objetivos deste diário</h2>
+    <p class="references-intro">A página documenta não só o que foi criado, mas como se chegou às decisões: qual era o problema de cada etapa, como a IA foi usada como colaboradora, o que foi escolhido ou corrigido por orientação humana e que evidências ficaram no projeto. A sequência abaixo é editorial e cronológica; não substitui os documentos de especificação nem afirma que todas as propostas foram implementadas.</p>
+    <div class="journal">
+      <article>
+        <div class="entry-label">Capítulo 01 · Da ideia ao recorte do produto</div>
+        <h3>Encontrar uma ideia que pudesse ser testada</h3>
+        <p><strong>Ponto de partida.</strong> O projeto começou com a intenção de criar uma aventura 2D em Pixel Art sobre exploração, memórias e uma civilização desaparecida. A primeira tarefa foi transformar esse tema amplo em uma experiência que coubesse em uma entrega inicial.</p>
+        <p><strong>Trabalho com IA.</strong> A colaboração em conversa ajudou a decompor a ideia em pilares de produto, universo narrativo e possibilidades de jogo. A narrativa passou a girar em torno de Avelora, dos cristais que preservam memórias e do evento chamado O Silêncio.</p>
+        <p><strong>Decisão humana.</strong> Para evitar começar por um jogo grande demais, foi escolhido um arco planejado de dez fases, mas um MVP limitado à Floresta Esquecida. Exploração, alternância temporal, enigma e conclusão formariam o recorte a validar; combate e sistemas extensos ficariam fora dele.</p>
+        <p><strong>Resultado documentado.</strong> A visão do jogo, a narrativa e a especificação do MVP registram conceito, pilares, sequência da fase, limites e critérios de aceite. O conteúdo futuro aparece como planejamento, não como funcionalidade entregue.</p>
+      </article>
+      <article>
+        <div class="entry-label">Capítulo 02 · Da proposta à documentação</div>
+        <h3>Registrar decisões antes de ampliar o escopo</h3>
+        <p><strong>Pergunta desta etapa.</strong> Como manter alinhados produto, história e implementação sem transformar cada nova ideia em requisito automático? A resposta foi separar os assuntos em documentos com responsabilidades distintas.</p>
+        <p><strong>Trabalho com IA.</strong> Agentes de IA apoiaram a redação, a organização de requisitos, a exploração de alternativas técnicas e a decomposição do plano. As conversas foram convertidas em artefatos que podiam ser relidos e revistos, em vez de permanecerem apenas como decisões implícitas.</p>
+        <p><strong>Decisão humana.</strong> O escopo e as prioridades foram direcionados pelo usuário. Sugestões foram tratadas como opções: a arquitetura proposta não era prova de implementação, e os requisitos precisavam caber no MVP.</p>
+        <p><strong>Resultado documentado.</strong> Foram estruturados seis arquivos Markdown: visão, narrativa e fases, especificação do MVP, arquitetura técnica, plano de desenvolvimento e plano técnico detalhado, com etapas, testes, riscos e critérios de conclusão.</p>
+      </article>
+      <article>
+        <div class="entry-label">Capítulo 03 · Preparar a colaboração com agentes</div>
+        <h3>Usar especialização sem abrir mão de direção</h3>
+        <p><strong>Problema observado.</strong> Um único perfil genérico tende a misturar decisões artísticas, de game design e de engenharia. O fluxo precisava preservar contexto do projeto e, ao mesmo tempo, carregar conhecimento específico apenas quando necessário.</p>
+        <p><strong>Trabalho com IA.</strong> Foi configurado o agente <em>Game Design &amp; Pixel Art Expert</em> para inspecionar o repositório, identificar a engine, preservar escopo, implementar e validar. O perfil reúne desenvolvimento de jogos, arte, UX, arquitetura, performance, testes e web. O Tech Lead apoia tarefas de arquitetura e engenharia.</p>
+        <p><strong>Skills sob demanda.</strong> Workflows independentes cobrem Pixel Art, precisão de pixels, gameplay, UI/UX, animação, level design, arquitetura, performance, QA, pipeline de assets e desenvolvimento web. A seleção depende da tarefa; não se carrega todo o repertório em toda interação.</p>
+        <p><strong>Responsabilidade e limite.</strong> Os agentes propõem, analisam e executam tarefas delegadas; a direção do projeto continua sendo humana. Código, assets, decisões de produto e resultados de testes precisam ser inspecionados. Não se presume que uma API, ferramenta ou validação exista sem evidência.</p>
+        <p><strong>Resultado documentado.</strong> Os perfis e skills ficaram em arquivos reutilizáveis, com descrições e instruções especializadas, e são disponibilizados na seção de agentes.</p>
+      </article>
+      <article>
+        <div class="entry-label">Capítulo 04 · Prototipar, observar e reavaliar</div>
+        <h3>De um protótipo simples a uma base técnica mais rica</h3>
+        <p><strong>Primeiro experimento.</strong> A V1 foi construída como um único HTML com Canvas, CSS e JavaScript, para abrir diretamente no navegador sem instalar dependências. A intenção era testar rapidamente o fluxo central antes de assumir uma stack mais complexa.</p>
+        <p><strong>Iteração visual.</strong> Nas V1.1, V1.2 e V1.3, o feedback se concentrou em iluminação, vegetação, resolução, caminho, rochas e arquitetura. A história e o enigma foram preservados enquanto a apresentação e a densidade visual evoluíam.</p>
+        <p><strong>Reavaliação técnica.</strong> Para sustentar arte e sistemas mais elaborados, a fase foi reconstruída em Phaser e TypeScript, com Vite. Scripts em Python com Pillow passaram a gerar tiles, sprites e decoração de forma repetível, reduzindo trabalho manual em assets.</p>
+        <p><strong>Iteração da V2.</strong> A direção visual avançou para cenários escuros iluminados por lanterna, texturas mais densas e árvores orgânicas. Cada pedido de refinamento foi aplicado ao gerador e conferido no jogo, mantendo os identificadores de assets e os dados de mapa.</p>
+        <p><strong>Resultado documentado.</strong> V1.0–V1.3 registram a exploração inicial de forma independente; V2.0–V2.2 mostram a reconstrução e refinamentos técnicos e visuais. As capturas abaixo são evidências de versões, não uma afirmação de que o projeto completo planejado já esteja pronto.</p>
+      </article>
+      <article>
+        <div class="entry-label">Capítulo 05 · Validar, corrigir e registrar limites</div>
+        <h3>Fechar o ciclo com testes e evidências</h3>
+        <p><strong>Problema reproduzido.</strong> Na V2.2, após ativar Sol, Lua e Ondas, o personagem não conseguia passar pelo acesso do templo. A sequência do enigma concluía, mas os pedestais das runas deixavam uma passagem estreita demais para a colisão do jogador.</p>
+        <p><strong>Correção e validação.</strong> A largura das colisões dos pedestais foi reduzida sem alterar sua arte. A sequência foi testada no navegador: ativação da última runa, travessia até a câmara e interação com o núcleo. Build e testes automatizados existentes também foram executados.</p>
+        <p><strong>Aprendizado sobre IA.</strong> A utilidade não esteve em aceitar uma primeira resposta, mas em encadear inspeção, hipótese, reprodução, mudança pequena e verificação. O agente deve relatar o que realmente testou e explicitar o que não cobriu.</p>
+        <p><strong>Estado e continuidade.</strong> Builds, testes, capturas, arquivos-fonte e planos preservam rastreabilidade. Questões em aberto e diferenças entre planejado e implementado continuam explícitas, para que próximos passos partam de evidências e não de suposições.</p>
+      </article>
+    </div>
+    <h3 id="docs-processo">Documentação técnica e de negócio</h3>
+    <p class="references-intro">Os documentos são numerados e se complementam: visão e narrativa definem o produto; a especificação delimita o MVP; a arquitetura explica como organizá-lo; e os planos detalham etapas, testes, riscos e critérios de conclusão. Eles registram decisões e propostas, não significam que todo o conteúdo planejado tenha sido implementado.</p>
     <p class="references-intro">Os arquivos abaixo são o material de planejamento usado na construção. Cada um pode ser aberto no navegador ou baixado.</p>
     <ol>
         <li>
@@ -386,16 +451,18 @@
     </div>
   </section>
 
-  <div class="layout">
+  <div class="layout" id="documentacao">
     <aside>
-      <nav class="toc" aria-label="Índice do documento">
+      <nav class="toc" aria-label="Índice do projeto">
         <strong>Navegar pelo projeto</strong>
-        <a href="#visao">01 · Visão do jogo</a>
-        <a href="#processo">Documentação e processo</a>
+        <a href="#evolucao">Jogos · V1.0–V1.3</a>
+        <a href="#evolucao-v2">Jogos · V2.0–V2.2</a>
+        <a href="#objetivos">Objetivos e processo</a>
+        <a href="#docs-processo">Documentação técnica e de negócio</a>
         <a href="#agentes">Agentes e skills</a>
-        <a href="#evolucao">Evolução da V1</a>
-        <a href="#evolucao-v2">Evolução da V2</a>
         <a href="#imagens">Referências visuais</a>
+        <a href="#documentacao">Planejamento do jogo</a>
+        <a href="#visao">01 · Visão do jogo</a>
         <a href="#narrativa">02 · Narrativa e fases</a>
         <a href="#mvp">03 · Especificação do MVP</a>
         <a href="#tecnica">04 · Arquitetura técnica</a>
